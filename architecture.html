@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SeatFlash — Architecture</title>
+<style>
+:root{color-scheme:dark;--bg:#020617;--panel:#0f172a;--line:#1e293b;--text:#e2e8f0;--muted:#94a3b8;--cyan:#22d3ee;--green:#34d399;--violet:#a78bfa;--amber:#fbbf24;--slate:#94a3b8;--rose:#fb7185}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:13px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}.wrap{max-width:1240px;margin:auto;padding:24px}.head{display:flex;align-items:center;gap:10px;margin-bottom:16px}.pulse{width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 18px var(--green)}h1{font:600 20px/1.2 inherit;margin:0}.subtitle{color:var(--muted);margin-top:4px}.frame{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:auto}svg{display:block;width:100%;min-width:980px;height:auto}.box{rx:8;stroke-width:1.5}.front{fill:#083344;fill-opacity:.72;stroke:var(--cyan)}.back{fill:#064e3b;fill-opacity:.72;stroke:var(--green)}.cache{fill:#4c1d95;fill-opacity:.64;stroke:var(--violet)}.external{fill:#1e293b;fill-opacity:.85;stroke:var(--slate)}.security{fill:#881337;fill-opacity:.48;stroke:var(--rose);stroke-dasharray:5 4}.label{fill:#f8fafc;font-size:13px;font-weight:600}.sub{fill:var(--muted);font-size:9px}.tiny{fill:#64748b;font-size:8px}.arrow{fill:none;stroke:#64748b;stroke-width:1.5;marker-end:url(#arrow)}.warm{fill:none;stroke:var(--amber);stroke-width:1.5;stroke-dasharray:6 4;marker-end:url(#arrowAmber)}.live{fill:none;stroke:var(--green);stroke-width:1.5;marker-end:url(#arrowGreen)}.zone{fill:none;stroke:var(--rose);stroke-width:1;stroke-dasharray:5 4;rx:12}.zone-label{fill:var(--rose);font-size:9px}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}.card h2{font-size:12px;margin:0 0 8px}.card ul{padding:0;margin:0;list-style:none;color:var(--muted);font-size:11px}.card li+li{margin-top:4px}.cyan{color:var(--cyan)}.green{color:var(--green)}.amber{color:var(--amber)}footer{color:#64748b;font-size:10px;margin-top:12px}@media(max-width:800px){.wrap{padding:12px}.cards{grid-template-columns:1fr}}
+</style>
+<div class="wrap">
+  <header class="head"><span class="pulse"></span><div><h1>SeatFlash — bird's-eye architecture</h1><div class="subtitle">Local, read-only Finnkino schedule + live seat-map accelerator</div></div></header>
+  <div class="frame">
+  <svg viewBox="0 0 1200 690" role="img" aria-label="SeatFlash architecture diagram">
+    <defs>
+      <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#1e293b" stroke-width=".5"/></pattern>
+      <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z" fill="#64748b"/></marker>
+      <marker id="arrowAmber" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z" fill="#fbbf24"/></marker>
+      <marker id="arrowGreen" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z" fill="#34d399"/></marker>
+    </defs>
+    <rect width="1200" height="690" fill="url(#grid)"/>
+
+    <!-- arrows behind boxes -->
+    <path class="arrow" d="M220 235H330"/><path class="arrow" d="M500 235H615"/>
+    <path class="arrow" d="M780 225H900"/><path class="arrow" d="M900 255H780"/>
+    <path class="warm" d="M700 315V425H865"/><path class="warm" d="M700 315V515H865"/>
+    <path class="live" d="M780 270C845 270 845 555 930 555"/>
+    <path class="arrow" d="M980 425V370"/><path class="arrow" d="M980 515V370"/><path class="arrow" d="M980 555V370"/>
+    <path class="arrow" d="M1010 205V150"/><path class="arrow" d="M1010 150H700V190"/>
+
+    <!-- local boundary -->
+    <rect class="zone" x="35" y="105" width="790" height="520"/>
+    <text class="zone-label" x="55" y="128">LOCAL MACHINE · 127.0.0.1:8799 · NO BOOKINGS / HOLDS / PURCHASES</text>
+
+    <!-- User/browser -->
+    <rect class="box front" x="70" y="190" width="150" height="90"/>
+    <text class="label" x="145" y="220" text-anchor="middle">Browser UI</text>
+    <text class="sub" x="145" y="240" text-anchor="middle">single index.html</text>
+    <text class="sub" x="145" y="255" text-anchor="middle">vanilla JS + compact CSS</text>
+    <text class="tiny" x="145" y="270" text-anchor="middle">cinema → day → movie → show</text>
+
+    <!-- API -->
+    <rect class="box back" x="330" y="175" width="170" height="120"/>
+    <text class="label" x="415" y="205" text-anchor="middle">aiohttp Backend</text>
+    <text class="sub" x="415" y="226" text-anchor="middle">GET /api/sites</text>
+    <text class="sub" x="415" y="241" text-anchor="middle">GET /api/schedule</text>
+    <text class="sub" x="415" y="256" text-anchor="middle">GET /api/seatmap</text>
+    <text class="sub" x="415" y="271" text-anchor="middle">GET /api/cache-status</text>
+
+    <!-- Client -->
+    <rect class="box back" x="615" y="175" width="165" height="140"/>
+    <text class="label" x="697" y="205" text-anchor="middle">Finnkino Client</text>
+    <text class="sub" x="697" y="228" text-anchor="middle">dynamic API config/token</text>
+    <text class="sub" x="697" y="244" text-anchor="middle">browser-compatible requests</text>
+    <text class="sub" x="697" y="260" text-anchor="middle">curl-cffi fallback</text>
+    <text class="tiny" x="697" y="286" text-anchor="middle">normalizes layouts + availability</text>
+    <text class="tiny" x="697" y="300" text-anchor="middle">never stores credentials</text>
+
+    <!-- caches -->
+    <rect class="box cache" x="110" y="395" width="180" height="90"/>
+    <text class="label" x="200" y="425" text-anchor="middle">Schedule Index</text>
+    <text class="sub" x="200" y="446" text-anchor="middle">17 sites × today+6</text>
+    <text class="sub" x="200" y="461" text-anchor="middle">~2,950 showtimes in memory</text>
+    <path class="arrow" d="M330 270C280 305 220 335 200 395"/>
+
+    <rect class="box cache" x="345" y="395" width="180" height="90"/>
+    <text class="label" x="435" y="425" text-anchor="middle">Layout Cache</text>
+    <text class="sub" x="435" y="446" text-anchor="middle">~120 unique auditoriums</text>
+    <text class="sub" x="435" y="461" text-anchor="middle">stable geometry / labels</text>
+    <path class="arrow" d="M415 295V395"/>
+
+    <rect class="box cache" x="580" y="395" width="180" height="90"/>
+    <text class="label" x="670" y="425" text-anchor="middle">Live Seat Cache</text>
+    <text class="sub" x="670" y="446" text-anchor="middle">selected showtime only</text>
+    <text class="sub" x="670" y="461" text-anchor="middle">5-second TTL</text>
+    <path class="arrow" d="M500 270C555 305 625 335 670 395"/>
+
+    <rect class="box external" x="865" y="180" width="230" height="190"/>
+    <text class="label" x="980" y="210" text-anchor="middle">Finnkino / Vista Lumos</text>
+    <text class="sub" x="980" y="233" text-anchor="middle">digital-api.finnkino.fi</text>
+    <text class="sub" x="980" y="260" text-anchor="middle">/ocapi/v1/sites</text>
+    <text class="sub" x="980" y="278" text-anchor="middle">/showtimes/by-business-date</text>
+    <text class="sub" x="980" y="296" text-anchor="middle">/showtimes/{id}/seat-layout</text>
+    <text class="sub" x="980" y="314" text-anchor="middle">/showtimes/{id}/seat-availability</text>
+    <text class="tiny" x="980" y="342" text-anchor="middle">public read-only data path</text>
+
+    <!-- flow stages -->
+    <rect class="box external" x="865" y="405" width="230" height="60"/>
+    <text class="label" x="980" y="430" text-anchor="middle">1 · Startup warm</text>
+    <text class="sub" x="980" y="449" text-anchor="middle">7 batched date requests · every 5 min</text>
+
+    <rect class="box external" x="865" y="495" width="230" height="60"/>
+    <text class="label" x="980" y="520" text-anchor="middle">2 · Prefetch stable data</text>
+    <text class="sub" x="980" y="539" text-anchor="middle">dedupe and cache auditorium layouts</text>
+
+    <rect class="box external" x="865" y="585" width="230" height="60"/>
+    <text class="label" x="980" y="610" text-anchor="middle">3 · Click showtime</text>
+    <text class="sub" x="980" y="629" text-anchor="middle">fetch fresh seats → merge → minimap</text>
+
+    <text class="tiny" x="275" y="220">HTTP JSON</text>
+    <text class="tiny" x="535" y="220">internal client</text>
+    <text class="tiny" x="800" y="212">authenticated GET</text>
+    <text class="tiny" x="784" y="410" fill="#fbbf24">background prefetch</text>
+    <text class="tiny" x="807" y="548" fill="#34d399">on demand</text>
+  </svg>
+  </div>
+  <section class="cards">
+    <div class="card"><h2 class="cyan">Request path</h2><ul><li>Browser asks only the local API.</li><li>Schedules/layouts usually resolve from RAM.</li><li>Live seats are fetched only for the selected show.</li></ul></div>
+    <div class="card"><h2 class="amber">Speed strategy</h2><ul><li>7 upstream schedule calls cover 119 site/day views.</li><li>Stable layouts are deduplicated and preloaded.</li><li>Volatile availability stays fresh with a 5s TTL.</li></ul></div>
+    <div class="card"><h2 class="green">Safety boundary</h2><ul><li>Local service bound to 127.0.0.1.</li><li>Runtime token discovery; no credential committed.</li><li>Read-only: no order, hold, booking, or payment flow.</li></ul></div>
+  </section>
+  <footer>C:\Users\Asad\finnkino-seatmap · app.py + static/index.html · in-memory cache, no database</footer>
+</div>
+</html>

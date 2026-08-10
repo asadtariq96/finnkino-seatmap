@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SeatFlash — A: Unified strip (grid-default pane)</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0c12;--panel:#0f131b;--raised:#161c26;--hover:#1b2230;--line:#232c3a;--soft:#171d28;--text:#eef1f6;--muted:#96a0b1;--dim:#5e6877;--accent:#f3bc4b;--screen:#7fb7e0;--free:#2eaf53;--sold:#34363b;--hold:#d8b94a;--danger:#ff7c86}
+html,body{height:100%}
+body{font:13px/1.35 system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column}
+.top{display:flex;align-items:center;gap:10px;padding:0 10px;height:46px;border-bottom:1px solid var(--line);background:var(--panel);flex:0 0 auto}
+.brand{font-weight:800;letter-spacing:.5px;white-space:nowrap}.brand i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px rgba(243,188,75,.7);margin-right:8px}
+.days{display:flex;gap:2px;flex:1;overflow-x:auto;scrollbar-width:none}
+.day{border:1px solid transparent;background:transparent;color:var(--muted);border-radius:6px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.day:hover{background:var(--hover);color:var(--text)}.day.active{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.ctl{display:flex;gap:2px;padding:2px;border:1px solid var(--line);border-radius:7px;background:var(--bg)}
+.ctl button{border:0;background:transparent;color:var(--muted);border-radius:5px;padding:3px 9px;cursor:pointer;font-size:11px}
+.ctl button.active{background:var(--raised);color:var(--accent)}
+.top select{height:28px;border:1px solid var(--line);border-radius:6px;background:var(--raised);color:var(--text);padding:0 6px;outline:none;max-width:190px}
+.top input{height:28px;width:160px;border:1px solid var(--line);border-radius:6px;background:var(--raised);color:var(--text);padding:0 8px;outline:none}
+.pins{display:flex;align-items:center;gap:6px;padding:4px 10px;border-bottom:1px solid var(--soft);background:#0d1117;flex:0 0 auto;overflow-x:auto;scrollbar-width:none}
+.pins:empty{display:none}
+.pin{display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--raised);color:var(--text);border-radius:99px;padding:3px 6px 3px 10px;font-size:11px;cursor:pointer;white-space:nowrap}
+.pin b{color:var(--accent);font-weight:600}
+.pin .x{color:var(--dim);font-size:13px;line-height:1;padding:0 2px}
+.pin .x:hover{color:var(--danger)}
+.pins .hint{color:var(--dim);font-size:10px;margin-left:auto;white-space:nowrap}
+.main{flex:1;min-height:0;display:grid;grid-template-columns:330px minmax(0,1fr)}
+.list{min-width:0;min-height:0;display:flex;flex-direction:column;border-right:1px solid var(--line)}
+.list-head{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;border-bottom:1px solid var(--soft);font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;flex:0 0 auto}
+.rows{flex:1;overflow:auto;padding:6px 10px}
+.group-label{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;padding:8px 4px 4px}
+.movie{padding:7px 8px;border:1px solid transparent;border-radius:8px;margin-bottom:2px;cursor:pointer}
+.movie:hover{background:var(--hover);border-color:var(--line)}
+.movie.pinned{background:var(--raised);border-color:var(--accent)}
+.m-row{display:flex;align-items:baseline;gap:8px}
+.m-name{font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.m-fmt{font:9px ui-monospace,monospace;color:var(--dim)}
+.m-pin{font-size:9px;color:var(--accent);margin-left:auto;white-space:nowrap}
+.times{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.chip{border:1px solid var(--line);background:var(--raised);border-radius:6px;padding:3px 7px;cursor:pointer;font-size:11px;display:inline-flex;flex-direction:column;align-items:flex-start;min-width:52px;color:var(--text)}
+.chip:hover{border-color:var(--accent)}
+.chip .t{font-weight:650;font-variant-numeric:tabular-nums}
+.chip .p{font-size:8.5px;color:var(--free)}
+.chip.sold{opacity:.35;text-decoration:line-through;cursor:default}
+.seatpane{min-width:0;min-height:0;display:flex;flex-direction:column}
+.seat-head{display:flex;align-items:center;gap:12px;padding:8px 14px;border-bottom:1px solid var(--line);min-height:50px;flex:0 0 auto}
+.sh1{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sh2{font-size:11px;color:var(--muted);margin-top:1px}
+.stats{display:flex;gap:14px;margin-left:auto;font-size:11px;color:var(--muted);white-space:nowrap}
+.stats strong{color:var(--text)}
+.btn{border:1px solid var(--line);background:var(--raised);color:var(--muted);border-radius:7px;padding:5px 10px;font-size:11px;cursor:pointer;white-space:nowrap;flex:0 0 auto}
+.btn:hover{color:var(--text);border-color:var(--accent)}
+.btn.on{background:#3c3118;border-color:rgba(243,188,75,.55);color:#e8c87f}
+.grid-pane{flex:1;min-height:0;overflow:auto;padding:10px 14px 20px;scrollbar-width:thin;scrollbar-color:#2a3342 transparent}
+.day-block{margin-bottom:14px}
+.day-title{font:700 12px/1.2 system-ui;color:var(--text);padding:6px 2px;border-bottom:1px solid var(--soft);margin-bottom:8px;display:flex;align-items:baseline;gap:8px}
+.day-title span{font:9px ui-monospace,monospace;color:var(--dim);letter-spacing:.4px;text-transform:uppercase}
+.mm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.minimap{display:flex;flex-direction:column;gap:4px;padding:8px;border:1px solid var(--line);border-radius:10px;background:var(--raised);text-align:left;color:var(--text);cursor:pointer}
+.minimap:hover{border-color:var(--accent);background:var(--hover)}
+.mm-top{display:flex;align-items:baseline;gap:6px}
+.mm-time{font-weight:700;font-size:13px;font-variant-numeric:tabular-nums}
+.mm-fmt{font:8.5px ui-monospace,monospace;color:var(--muted);letter-spacing:.3px;margin-left:auto}
+.mm-title{font-weight:600;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mm-cinema{font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mm-stage{display:flex;flex-direction:column;gap:4px;margin-top:2px;min-height:58px;justify-content:center;align-items:center;border:1px dashed var(--soft);border-radius:6px;background:var(--bg)}
+.mm-screen{width:60%;height:3px;border-radius:50%;background:linear-gradient(90deg,transparent,var(--screen) 20% 80%,transparent);opacity:.85}
+.mm-rows{display:grid;gap:2px;justify-content:center}
+.mm-row{display:grid;gap:2px;justify-content:center}
+.mm-seat{width:6px;height:6px;border-radius:1px;background:var(--sold)}
+.mm-seat.av{background:var(--free)}.mm-seat.held{background:var(--hold)}
+.mm-stats{font-size:10px;color:var(--muted);display:flex;justify-content:space-between}
+.mm-stats strong{color:var(--text)}
+.map-view{flex:1;min-height:0;overflow:auto;display:grid;place-items:start center;padding:12px 16px 22px}
+.map-inner{min-width:min-content}
+.screen{height:5px;width:75%;margin:0 auto 6px;border-radius:50%;background:linear-gradient(90deg,transparent,var(--screen) 15% 85%,transparent);box-shadow:0 -7px 22px rgba(127,183,224,.28)}
+.screen-label{text-align:center;font-size:9px;letter-spacing:2px;color:var(--dim);margin-bottom:8px}
+.area-label{text-align:center;font-size:10px;color:var(--muted);margin:6px 0 4px}
+.grid{display:grid;gap:2px;justify-content:center}
+.seat{width:12px;height:12px;border-radius:2px;border:0;padding:0;background:var(--sold)}
+.seat.av{background:var(--free)}.seat.held{background:var(--hold)}
+.legend{display:flex;justify-content:center;gap:12px;margin-top:10px;font-size:10px;color:var(--muted)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.placeholder{color:var(--dim);text-align:center;padding:50px 20px;align-self:center}
+</style>
+<div class="top">
+  <div class="brand"><i></i>SEATFLASH</div>
+  <div class="days" id="days"></div>
+  <select id="city"><option>Helsinki</option><option>Tampere</option><option>Turku</option><option>All cities</option></select>
+  <div class="ctl" id="fmt"><button data-f="All" class="active">All</button><button data-f="IMAX">IMAX</button><button data-f="3D">3D</button></div>
+  <input id="q" placeholder="Find a movie…">
+</div>
+<div class="pins" id="pins"></div>
+<div class="main">
+  <section class="list">
+    <div class="list-head"><span id="modeLabel">Browsing all movies</span><span id="count"></span></div>
+    <div class="rows" id="rows"></div>
+  </section>
+  <aside class="seatpane">
+    <div class="seat-head">
+      <div><div class="sh1" id="sTitle">All shows</div><div class="sh2" id="sSub">every showtime at a glance — click a map to zoom</div></div>
+      <button class="btn" id="backBtn" hidden>← All shows</button>
+      <button class="btn" id="wideBtn">7-day</button>
+      <div class="stats" id="stats"></div>
+    </div>
+    <div id="paneBody" class="grid-pane"></div>
+  </aside>
+</div>
+<script>
+const CINEMAS={Helsinki:["Kinopalatsi Helsinki","Tennispalatsi Helsinki","Itis Helsinki","Maxim Helsinki"],Tampere:["Plevna Tampere","Cine Atlas Tampere"],Turku:["Kinopalatsi Turku"]};
+const DATA=[
+ ["Dune: Part Three","IMAX",{"Kinopalatsi Helsinki":["12:00","15:45","19:30"],"Tennispalatsi Helsinki":["13:15","17:00","21:30"],"Itis Helsinki":["14:00","18:15","22:00"],"Plevna Tampere":["16:00","20:00"]}],
+ ["Backrooms: Everything Must Go Edition","2D",{"Kinopalatsi Helsinki":["13:00","18:15"],"Tennispalatsi Helsinki":["15:30","21:00"],"Maxim Helsinki":["16:10","20:10"],"Cine Atlas Tampere":["17:45"]}],
+ ["Spider-Man: Brand New Day","2D/3D",{"Itis Helsinki":["12:30","18:00"],"Kinopalatsi Helsinki":["15:10","21:15"],"Plevna Tampere":["13:00","19:30"],"Kinopalatsi Turku":["14:20","20:40"]}],
+ ["Sisu 2","2D",{"Tennispalatsi Helsinki":["13:45","19:15"],"Itis Helsinki":["16:30","22:00"]}],
+ ["Frozen IV","3D",{"Kinopalatsi Helsinki":["13:00","18:30"],"Plevna Tampere":["15:45","21:00"]}],
+ ["Flow","2D",{"Itis Helsinki":["14:15","19:00"],"Kinopalatsi Turku":["16:45"]}],
+ ["Napoleon: The Director's Cut","IMAX",{"Kinopalatsi Helsinki":["12:45","21:30"],"Cine Atlas Tampere":["17:00"]}],
+ ["Koiramies","2D",{"Tennispalatsi Helsinki":["13:15","18:45"],"Maxim Helsinki":["16:00"]}],
+ ["Miffy elokuva","2D",{"Kinopalatsi Turku":["12:00","14:00"],"Plevna Tampere":["15:30"]}],
+ ["Joker: Folie à Deux","2D",{"Kinopalatsi Helsinki":["15:00","21:45"],"Itis Helsinki":["18:15"]}],
+];
+const DAYS=["Today","Tomorrow","11 Tue","12 Wed","13 Thu","14 Fri","15 Sat"];
+let pinned=null,selDay=0,wide=false,zoomed=null;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pct=t=>40+(t.split("").reduce((a,c)=>a+c.charCodeAt(0),0)%58);
+function rndStream(seed){let n=0;return()=>{const x=Math.sin(n++*seed)*10000;return x-Math.floor(x)}}
+function renderDays(){const el=$("#days");el.innerHTML=DAYS.map((l,i)=>`<button class="day ${i===selDay?'active':''}">${l}</button>`)}
+function renderPins(){
+  const parts=[];
+  if(pinned&&pinned.type==="movie")parts.push(`<button class="pin" data-unpin="movie"><b>${pinned.name}</b><span class="x">×</span></button>`);
+  if(pinned&&pinned.type==="cinema")parts.push(`<button class="pin" data-unpin="cinema"><b>${pinned.name}</b><span class="x">×</span></button>`);
+  const c=$("#city").value;
+  if(c!=="All cities")parts.push(`<button class="pin" data-unpin="city"><b>${c}</b><span class="x">×</span></button>`);
+  $("#pins").innerHTML=parts.join("")+`<span class="hint">any order — pick what you know</span>`;
+}
+function filteredShows(){
+  const q=$("#q").value.toLowerCase(),f=$("#fmt .active").dataset.f,c=$("#city").value;
+  const cinemas=c==="All cities"?Object.values(CINEMAS).flat():CINEMAS[c];
+  const out=[];
+  for(const [name,fmt,byC] of DATA){
+    if(pinned&&pinned.type==="movie"&&name!==pinned.name)continue;
+    if(q&&!name.toLowerCase().includes(q))continue;
+    if(f!=="All"&&!fmt.includes(f))continue;
+    for(const [cn,times] of Object.entries(byC)){
+      if(pinned&&pinned.type==="cinema"&&cn!==pinned.name)continue;
+      if(!cinemas.includes(cn))continue;
+      for(const t of times)out.push({name,fmt,cn,t,p:pct(t)});
+    }
+  }
+  return out.sort((a,b)=>a.t.localeCompare(b.t));
+}
+function miniSeats(seed,p){
+  const rnd=rndStream(seed),cols=12,rows=6;let html="",av=0;
+  for(let r=0;r<rows;r++){html+=`<div class="mm-row" style="grid-template-columns:repeat(${cols},6px)">`;for(let c2=0;c2<cols;c2++){const rv=rnd(),cls=rv<p/100?"av":rv<.95?"":"held";if(cls==="av")av++;html+=`<span class="mm-seat ${cls}"></span>`}html+=`</div>`}
+  return [html,av];
+}
+function renderGrid(){
+  zoomed=null;$("#backBtn").hidden=true;$("#sTitle").textContent="All shows";
+  $("#paneBody").className="grid-pane";
+  const shows=filteredShows();
+  $("#sSub").textContent=wide?`${shows.length} showtimes · next 7 days — click a map to zoom`:`${shows.length} showtimes · ${DAYS[selDay]} — click a map to zoom`;
+  $("#stats").innerHTML=`<span><strong>${shows.length}</strong> shows</span>`;
+  const block=(label,sub,list)=>`<section class="day-block"><div class="day-title">${label}<span>${sub}</span></div><div class="mm-grid">${list}</div></section>`;
+  const card=s=>{const [seats,av]=miniSeats((s.name+s.cn+s.t).split("").reduce((a,c)=>a+c.charCodeAt(0),0),s.p);return `<button class="minimap" data-m="${esc(s.name)}" data-c="${esc(s.cn)}" data-t="${s.t}"><span class="mm-top"><span class="mm-time">${s.t}</span><span class="mm-fmt">${esc(s.fmt)}</span></span><span class="mm-title">${esc(s.name)}</span><span class="mm-cinema">${esc(s.cn)}</span><span class="mm-stage"><span class="mm-screen"></span><span class="mm-rows">${seats}</span></span><span class="mm-stats"><span><strong>${av}</strong> free</span><span>${s.p}% open</span></span></button>`};
+  if(wide){
+    const blocks=DAYS.map((d,i)=>{const list=shows.map(card).join("");return list?block(d,`${shows.length} shows`,list):""}).join("");
+    $("#paneBody").innerHTML=blocks||`<div class="placeholder">No shows match</div>`;
+  }else{
+    $("#paneBody").innerHTML=block(DAYS[selDay],`${shows.length} shows`,shows.map(card).join(""))||`<div class="placeholder">No shows match</div>`;
+  }
+}
+function zoom(m,c,t){
+  zoomed={m,c,t};
+  $("#backBtn").hidden=false;$("#sTitle").textContent=m;$("#sSub").textContent=`${c} · ${t} · ${DAYS[selDay]}`;
+  const seed=(m+c+t).split("").reduce((a,x)=>a+x.charCodeAt(0),0),p=pct(t);
+  const rnd=rndStream(seed),cols=14,rows=8;let g="",av=0;
+  for(let r=0;r<rows;r++){for(let c2=0;c2<cols;c2++){const rv=rnd(),cls=rv<p/100?"av":rv<.95?"":"held";if(cls==="av")av++;g+=`<button class="seat ${cls}"></button>`}}
+  $("#stats").innerHTML=`<span><strong>${av}</strong> free</span><span><strong>${Math.round(av/(cols*rows)*100)}%</strong> open</span>`;
+  $("#paneBody").className="map-view";
+  $("#paneBody").innerHTML=`<div class="map-inner"><div class="screen"></div><div class="screen-label">SCREEN</div><div class="area-label">Katsomo</div><div class="grid" style="grid-template-columns:repeat(${cols},12px)">${g}</div><div class="legend"><span><i class="dot" style="background:var(--free)"></i>Available</span><span><i class="dot" style="background:var(--sold)"></i>Unavailable</span><span><i class="dot" style="background:var(--hold)"></i>Held</span></div></div>`;
+}
+function render(){
+  const q=$("#q").value.toLowerCase(),f=$("#fmt .active").dataset.f,c=$("#city").value;
+  const cinemas=c==="All cities"?Object.values(CINEMAS).flat():CINEMAS[c];
+  renderPins();
+  let rows=[];
+  if(pinned&&pinned.type==="movie"){
+    const m=DATA.find(x=>x[0]===pinned.name);
+    $("#modeLabel").textContent="Showtimes for "+m[0];
+    rows=[{label:"By cinema",sub:""},...Object.entries(m[2]).filter(([cn])=>cinemas.includes(cn)).map(([cn,times])=>({label:cn,sub:times.length+" shows",html:`<div class="movie"><div class="m-row"><span class="m-name">${cn}</span></div><div class="times">${times.map(t=>`<button class="chip" data-m="${esc(m[0])}" data-c="${esc(cn)}" data-t="${t}"><span class="t">${t}</span><span class="p">${pct(t)}% free</span></button>`).join("")}</div></div>`}))];
+  }else if(pinned&&pinned.type==="cinema"){
+    $("#modeLabel").textContent="Now showing at "+pinned.name;
+    rows=[{label:"By movie",sub:""},...DATA.filter(m=>m[2][pinned.name]).sort((a,b)=>a[0].localeCompare(b[0])).map(m=>({label:m[0],sub:m[1],html:`<div class="movie pinned"><div class="m-row"><span class="m-name">${m[0]}</span><span class="m-fmt">${m[1]}</span><span class="m-pin">pinned ✓</span></div><div class="times">${m[2][pinned.name].map(t=>`<button class="chip" data-m="${esc(m[0])}" data-c="${esc(pinned.name)}" data-t="${t}"><span class="t">${t}</span><span class="p">${pct(t)}% free</span></button>`).join("")}</div></div>`}))];
+  }else{
+    const rows2=DATA.filter(m=>m[0].toLowerCase().includes(q)&&(f==="All"||m[1].includes(f)));
+    $("#modeLabel").textContent="Browsing all movies";
+    rows=[{label:"By movie",sub:"click a title to pin it"},...rows2.map(m=>({label:"",sub:"",html:`<div class="movie" data-pin="${esc(m[0])}"><div class="m-row"><span class="m-name">${m[0]}</span><span class="m-fmt">${m[1]}</span><span class="m-pin">pin</span></div><div class="times">${Object.entries(m[2]).filter(([cn])=>cinemas.includes(cn)).map(([cn,times])=>times.map(t=>`<button class="chip" data-m="${esc(m[0])}" data-c="${esc(cn)}" data-t="${t}"><span class="t">${t}</span><span class="p">${pct(t)}% free</span></button>`).join("")).join("")}</div></div>`}))];
+  }
+  $("#count").textContent=(rows.length-1)+" results";
+  $("#rows").innerHTML=rows.map(r=>`<div class="group-label">${r.label}<span>${r.sub}</span></div>${r.html??""}`).join("")||`<div class="placeholder">No shows match</div>`;
+  renderGrid();
+}
+$("#days").onclick=e=>{const b=e.target.closest(".day");if(!b)return;selDay=[...$("#days").children].indexOf(b);renderDays();renderGrid()};
+$("#paneBody").onclick=e=>{
+  const mm=e.target.closest(".minimap");if(mm)return zoom(mm.dataset.m,mm.dataset.c,mm.dataset.t);
+};
+$("#backBtn").onclick=()=>{renderGrid()};
+$("#wideBtn").onclick=()=>{wide=!wide;$("#wideBtn").classList.toggle("on",wide);renderGrid()};
+$("#rows").onclick=e=>{
+  const chip=e.target.closest(".chip");if(chip)return zoom(chip.dataset.m,chip.dataset.c,chip.dataset.t);
+  const mv=e.target.closest("[data-pin]");if(mv){pinned={type:"movie",name:mv.dataset.pin};render()}
+};
+$("#pins").onclick=e=>{
+  const b=e.target.closest("[data-unpin]");if(!b)return;
+  if(b.dataset.unpin==="movie"||b.dataset.unpin==="cinema")pinned=null;else $("#city").value="All cities";
+  render();
+};
+$("#city").onchange=()=>{if($("#city").value!=="All cities")pinned=null;render()};
+$("#fmt").onclick=e=>{const b=e.target.closest("button");if(!b)return;document.querySelectorAll("#fmt button").forEach(x=>x.classList.toggle("active",x===b));render()};
+$("#q").oninput=()=>{if(!pinned)render()};
+renderDays();render();
+</script>
+</html>

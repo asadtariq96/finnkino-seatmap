@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SeatFlash — Variant B: Seat-first</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0c12;--panel:#0f131b;--raised:#161c26;--hover:#1b2230;--line:#232c3a;--soft:#171d28;--text:#eef1f6;--muted:#96a0b1;--dim:#5e6877;--accent:#f3bc4b;--accent-ink:#17120a;--screen:#7fb7e0;--free:#2eaf53;--sold:#34363b;--hold:#d8b94a}
+html,body{height:100%}
+body{font:13px/1.35 system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column}
+.top{display:flex;align-items:center;gap:14px;padding:0 14px;height:46px;border-bottom:1px solid var(--line);background:var(--panel);flex:0 0 auto}
+.brand{font-weight:800;letter-spacing:.5px;white-space:nowrap}.brand i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px rgba(243,188,75,.7);margin-right:8px}
+.days{display:flex;gap:2px;flex:1;overflow-x:auto;scrollbar-width:none}
+.day{border:1px solid transparent;background:transparent;color:var(--muted);border-radius:6px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.day:hover{background:var(--hover);color:var(--text)}.day.active{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.top select{height:28px;border:1px solid var(--line);border-radius:6px;background:var(--raised);color:var(--text);padding:0 6px;outline:none}
+.top input{height:28px;width:160px;border:1px solid var(--line);border-radius:6px;background:var(--raised);color:var(--text);padding:0 8px;outline:none}
+.main{flex:1;min-height:0;display:grid;grid-template-columns:250px 1fr}
+.rail{min-height:0;border-right:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column}
+.rail-head{padding:8px 10px;border-bottom:1px solid var(--line);font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;display:flex;justify-content:space-between;align-items:center}
+.rail-list{flex:1;overflow:auto}
+.movie{padding:8px 10px;border-bottom:1px solid var(--soft);cursor:pointer}
+.movie:hover{background:var(--hover)}
+.movie.sel{background:var(--raised);box-shadow:inset 2px 0 0 var(--accent)}
+.m-name{font-weight:650;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.m-times{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px}
+.chip{border:1px solid var(--line);background:var(--bg);color:var(--muted);border-radius:5px;padding:2px 5px;font-size:10px;cursor:pointer}
+.chip:hover{color:var(--text);border-color:var(--accent)}
+.chip.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.chip.sold{opacity:.35;text-decoration:line-through}
+.stage{min-width:0;min-height:0;display:flex;flex-direction:column}
+.stage-head{display:flex;align-items:center;gap:14px;padding:9px 16px;border-bottom:1px solid var(--line);min-height:50px}
+.st-h1{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-h2{font-size:11px;color:var(--muted);margin-top:1px}
+.stats{margin-left:auto;display:flex;gap:14px;color:var(--muted);font-size:12px;white-space:nowrap}
+.stats strong{color:var(--text);font-weight:700}
+.stage-map{flex:1;min-height:0;overflow:auto;display:grid;place-items:center;padding:14px 24px 28px}
+.map-inner{min-width:min-content}
+.screen{height:6px;width:78%;margin:0 auto 7px;border-radius:50%;background:linear-gradient(90deg,transparent,var(--screen) 15% 85%,transparent);box-shadow:0 -8px 26px rgba(127,183,224,.3)}
+.screen-label{text-align:center;font-size:9px;letter-spacing:2.5px;color:var(--dim);margin-bottom:10px}
+.area-label{text-align:center;font-size:11px;color:var(--muted);margin:8px 0 5px}
+.grid{display:grid;gap:2.5px;justify-content:center}
+.seat{width:13px;height:13px;border-radius:3px;border:0;padding:0;background:var(--sold);cursor:pointer}
+.seat.av{background:var(--free)}.seat.held{background:var(--hold)}.seat.wc{border-radius:50%}
+.seat:hover{transform:scale(1.5);box-shadow:0 0 0 2px var(--bg)}
+.rowlab{display:grid;grid-template-columns:18px 1fr;gap:6px;align-items:center;margin:2px 0}
+.rl{font-size:9px;text-align:right;color:var(--dim);font-family:ui-monospace,monospace}
+.legend{display:flex;justify-content:center;gap:14px;margin-top:12px;font-size:10px;color:var(--muted)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.placeholder{color:var(--dim);text-align:center;padding:60px 20px}
+</style>
+<div class="top">
+  <div class="brand"><i></i>SEATFLASH</div>
+  <div class="days" id="days"></div>
+  <select id="cinema"><option>All cinemas</option><option>Kinopalatsi Helsinki</option><option>Tennispalatsi Helsinki</option><option>Itis Helsinki</option><option>Flamingo Vantaa</option></select>
+  <input id="q" placeholder="Filter movies…">
+</div>
+<div class="main">
+  <aside class="rail">
+    <div class="rail-head"><span>Now showing</span><span id="count"></span></div>
+    <div class="rail-list" id="list"></div>
+  </aside>
+  <section class="stage">
+    <div class="stage-head">
+      <div style="min-width:0"><div class="st-h1" id="sTitle">Select a show</div><div class="st-h2" id="sSub">Pick a showtime — the screen stays dark</div></div>
+      <div class="stats" id="stats"></div>
+    </div>
+    <div class="stage-map" id="map"><div class="placeholder">Click a showtime —<br>the full auditorium renders here</div></div>
+  </section>
+</div>
+<script>
+const MOVIES=[
+ ["Backrooms: Everything Must Go Edition","2D",["13:00","15:30","18:15","21:00"]],
+ ["Spider-Man: Brand New Day","2D/3D",["12:30","15:10","18:00","21:15"]],
+ ["Ryhmä Hau: Dinoelokuva","2D",["12:15","14:30","17:00"]],
+ ["Sisu 2","2D",["13:45","16:30","19:15","22:00"]],
+ ["Dune: Part Three","IMAX",["12:00","15:45","19:30","23:00"]],
+ ["Frozen IV","3D",["13:00","15:45","18:30","21:00"]],
+ ["Flow","2D",["14:15","16:45","19:00"]],
+ ["Napoleon: The Director's Cut","IMAX",["12:45","17:00","21:30"]],
+ ["Koiramies","2D",["13:15","16:00","18:45"]],
+ ["Miffy elokuva","2D",["12:00","14:00"]],
+ ["Joker: Folie à Deux","2D",["15:00","18:15","21:45"]],
+ ["Conclave","2D",["13:30","16:15","19:00","21:30"]],
+];
+let sel=null;
+function renderDays(){const names=["Today","Tomorrow"],el=document.querySelector("#days");el.innerHTML=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()+i);const l=names[i]||d.toLocaleDateString("en",{weekday:"short",day:"numeric"});return `<button class="day ${i===0?'active':''}">${l}</button>`})}
+function render(){
+  const q=document.querySelector("#q").value.toLowerCase();
+  const rows=MOVIES.filter(m=>m[0].toLowerCase().includes(q));
+  document.querySelector("#count").textContent=rows.length+" films";
+  document.querySelector("#list").innerHTML=rows.map((m,mi)=>{
+    const [name,fmt,times]=m;
+    return `<div class="movie ${sel&&sel.mi===mi?'sel':''}" data-mi="${mi}"><div class="m-name">${name}</div><div class="m-times">${times.map(t=>`<button class="chip ${sel&&sel.mi===mi&&sel.t===t?'on':''}" data-mi="${mi}" data-t="${t}">${t}</button>`).join("")}</div></div>`;
+  }).join("");
+}
+function seatmap(id){
+  const cols=16,rows=9,grid=document.createElement("div");
+  grid.className="grid";grid.style.gridTemplateColumns=`repeat(${cols},13px)`;
+  let n=0;const seed=id.split("").reduce((a,c)=>a+c.charCodeAt(0),0);
+  const rnd=()=>{const x=Math.sin(n++*seed)*10000;return x-Math.floor(x)};
+  let av=0;
+  const rowsHtml=[];
+  for(let r=0;r<rows;r++){
+    const wrap=document.createElement("div");wrap.className="rowlab";
+    wrap.innerHTML=`<span class="rl">${r+1}</span>`;
+    const rowg=document.createElement("div");rowg.className="grid";rowg.style.gridTemplateColumns=`repeat(${cols},13px)`;
+    for(let c=0;c<cols;c++){
+      const rv=rnd(),wc=(c===0||c===cols-1)&&r%3===0;
+      const cls=wc?"wc":rv<.72?"av":rv<.9?"":"held";
+      if(cls==="av")av++;
+      const b=document.createElement("button");b.className=`seat ${cls}`;rowg.appendChild(b);
+    }
+    wrap.appendChild(rowg);grid.appendChild(wrap);
+  }
+  const wrap=document.createElement("div");wrap.className="map-inner";
+  wrap.innerHTML=`<div class="screen"></div><div class="screen-label">SCREEN</div><div class="area-label">Katsomo</div>`;
+  wrap.appendChild(grid);
+  wrap.innerHTML+=`<div class="legend"><span><i class="dot" style="background:var(--free)"></i>Available</span><span><i class="dot" style="background:var(--sold)"></i>Unavailable</span><span><i class="dot" style="background:var(--hold)"></i>Held</span></div>`;
+  return [wrap,av];
+}
+function load(mi,t){
+  const [name,fmt,times]=MOVIES[mi];
+  sel={mi,t};
+  render();
+  document.querySelector("#sTitle").textContent=name;
+  document.querySelector("#sSub").textContent=`${document.querySelector("#cinema").value} · ${fmt} · ${t}`;
+  const [map,av]=seatmap(t+name);
+  const m=document.querySelector("#map");m.innerHTML="";m.appendChild(map);
+  document.querySelector("#stats").innerHTML=`<span><strong>${av}</strong> free</span><span><strong>${Math.round(av/(16*9)*100)}%</strong> open</span>`;
+}
+document.querySelector("#list").onclick=e=>{
+  const chip=e.target.closest(".chip");
+  if(chip)return load(+chip.dataset.mi,chip.dataset.t);
+  const mv=e.target.closest(".movie");
+  if(mv){const mi=+mv.dataset.mi;if(sel&&sel.mi===mi)return;load(mi,MOVIES[mi][2][0])}
+};
+document.querySelector("#q").oninput=render;
+renderDays();render();
+</script>
+</html>

@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SeatFlash — B: Movie focus matrix</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0c12;--panel:#0f131b;--raised:#161c26;--hover:#1b2230;--line:#232c3a;--soft:#171d28;--text:#eef1f6;--muted:#96a0b1;--dim:#5e6877;--accent:#f3bc4b;--screen:#7fb7e0;--free:#2eaf53;--sold:#34363b;--hold:#d8b94a}
+html,body{height:100%}
+body{font:13px/1.35 system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column}
+.top{display:flex;align-items:center;gap:10px;padding:0 10px;height:46px;border-bottom:1px solid var(--line);background:var(--panel);flex:0 0 auto}
+.brand{font-weight:800;letter-spacing:.5px;white-space:nowrap}.brand i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px rgba(243,188,75,.7);margin-right:8px}
+input{height:28px;width:220px;border:1px solid var(--line);border-radius:6px;background:var(--raised);color:var(--text);padding:0 8px;outline:none}
+.spacer{flex:1}
+.ctl{display:flex;gap:2px;padding:2px;border:1px solid var(--line);border-radius:7px;background:var(--bg)}
+.ctl button{border:0;background:transparent;color:var(--muted);border-radius:5px;padding:3px 9px;cursor:pointer;font-size:11px}
+.ctl button.active{background:var(--raised);color:var(--accent)}
+.main{flex:1;min-height:0;display:grid;grid-template-columns:280px minmax(0,1fr) 420px}
+.rail{min-height:0;border-right:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column}
+.rail-head{padding:8px 10px;border-bottom:1px solid var(--line);font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px}
+.rail-list{flex:1;overflow:auto;padding:4px}
+.movie{padding:8px 10px;border:1px solid transparent;border-radius:8px;cursor:pointer;margin-bottom:2px}
+.movie:hover{background:var(--hover)}
+.movie.sel{background:var(--raised);border-color:var(--accent)}
+.m-name{font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.m-meta{font-size:10px;color:var(--dim);margin-top:2px;display:flex;justify-content:space-between}
+.stage{min-width:0;min-height:0;display:flex;flex-direction:column}
+.stage-head{padding:9px 16px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:10px}
+.stage-head h1{font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stage-head .sub{font-size:11px;color:var(--muted);white-space:nowrap}
+.matrix-wrap{flex:1;min-height:0;overflow:auto;padding:10px 16px 20px}
+table{border-collapse:collapse;width:100%;min-width:640px}
+th,td{text-align:left;padding:0;border-bottom:1px solid var(--soft)}
+th{position:sticky;top:0;background:var(--bg);padding:6px 8px;font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;z-index:1}
+th.ci{position:sticky;left:0;z-index:2;min-width:150px}
+td.ci{position:sticky;left:0;background:var(--bg);padding:8px;font-weight:600;font-size:12px;z-index:1}
+td.cell{padding:4px 6px}
+.cellbox{border:1px solid var(--line);background:var(--raised);border-radius:7px;padding:5px 6px;cursor:pointer;min-height:52px;display:flex;flex-direction:column;gap:2px}
+.cellbox:hover{border-color:var(--accent)}
+.cellbox .t{font-weight:700;font-variant-numeric:tabular-nums}
+.cellbox .f{font-size:8.5px;color:var(--muted);letter-spacing:.3px}
+.cellbox .p{font-size:9px;color:var(--free)}
+.cellbox.empty{border-color:transparent;background:transparent;cursor:default;opacity:.25}
+.cellbox.sold{opacity:.35;text-decoration:line-through;cursor:default}
+.legend{display:flex;gap:14px;margin-top:10px;font-size:10px;color:var(--muted);padding:0 4px}
+.bar{width:46px;height:5px;border-radius:3px;background:linear-gradient(90deg,var(--free) var(--w),var(--sold) var(--w));display:inline-block;vertical-align:middle;margin-right:6px}
+.seatpane{min-width:0;min-height:0;border-left:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column}
+.seat-head{padding:8px 14px;border-bottom:1px solid var(--line);min-height:50px}
+.sh1{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sh2{font-size:11px;color:var(--muted);margin-top:1px}
+.stats{display:flex;gap:14px;margin-top:6px;font-size:11px;color:var(--muted)}
+.stats strong{color:var(--text)}
+.seat-map{flex:1;min-height:0;overflow:auto;display:grid;place-items:start center;padding:12px 16px 22px}
+.map-inner{min-width:min-content}
+.screen{height:5px;width:75%;margin:0 auto 6px;border-radius:50%;background:linear-gradient(90deg,transparent,var(--screen) 15% 85%,transparent);box-shadow:0 -7px 22px rgba(127,183,224,.28)}
+.screen-label{text-align:center;font-size:9px;letter-spacing:2px;color:var(--dim);margin-bottom:8px}
+.area-label{text-align:center;font-size:10px;color:var(--muted);margin:6px 0 4px}
+.grid{display:grid;gap:2px;justify-content:center}
+.seat{width:10px;height:10px;border-radius:2px;border:0;padding:0;background:var(--sold)}
+.seat.av{background:var(--free)}.seat.held{background:var(--hold)}
+.legend2{display:flex;justify-content:center;gap:12px;margin-top:10px;font-size:10px;color:var(--muted)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.placeholder{color:var(--dim);text-align:center;padding:50px 20px;align-self:center}
+</style>
+<div class="top">
+  <div class="brand"><i></i>SEATFLASH</div>
+  <input id="q" placeholder="Search movies…">
+  <div class="spacer"></div>
+  <div class="ctl" id="scope"><button data-s="city" class="active">Helsinki</button><button data-s="all">All cities</button></div>
+</div>
+<div class="main">
+  <aside class="rail">
+    <div class="rail-head">Movies</div>
+    <div class="rail-list" id="rail"></div>
+  </aside>
+  <section class="stage">
+    <div class="stage-head"><h1 id="mTitle">Select a movie</h1><span class="sub" id="mSub">—</span></div>
+    <div class="matrix-wrap" id="mw"><div class="placeholder">Pick a movie on the left —<br>you'll see every cinema × every day at once</div></div>
+  </section>
+  <aside class="seatpane">
+    <div class="seat-head"><div class="sh1" id="sTitle">Select a show</div><div class="sh2" id="sSub">Click a cell in the matrix</div><div class="stats" id="stats"></div></div>
+    <div class="seat-map" id="map"><div class="placeholder">No show selected</div></div>
+  </aside>
+</div>
+<script>
+const CINEMAS=["Kinopalatsi Helsinki","Tennispalatsi Helsinki","Itis Helsinki","Maxim Helsinki","Plevna Tampere","Cine Atlas Tampere","Kinopalatsi Turku"];
+const DATA=[
+ ["Dune: Part Three","IMAX",[["12:00",94],["15:45",71],["19:30",18],["13:15",82],["17:00",55],["21:30",9],["14:00",88],["18:15",40],["22:00",3]]],
+ ["Backrooms: Everything Must Go Edition","2D",[["13:00",85],["18:15",62],["15:30",90],["21:00",31],["16:10",77],["20:10",44]]],
+ ["Spider-Man: Brand New Day","2D/3D",[["12:30",96],["18:00",58],["15:10",73],["21:15",22],["13:00",91],["19:30",37]]],
+ ["Sisu 2","2D",[["13:45",80],["19:15",25],["16:30",67],["22:00",5]]],
+ ["Frozen IV","3D",[["13:00",88],["18:30",49],["15:45",76],["21:00",12]]],
+ ["Flow","2D",[["14:15",92],["19:00",35],["16:45",83]]],
+ ["Napoleon: The Director's Cut","IMAX",[["12:45",97],["21:30",8],["17:00",52]]],
+ ["Koiramies","2D",[["13:15",86],["18:45",60],["16:00",79]]],
+ ["Miffy elokuva","2D",[["12:00",99],["14:00",94],["15:30",89]]],
+ ["Joker: Folie à Deux","2D",[["15:00",71],["21:45",14],["18:15",56]]],
+];
+const DAYS=["Today","Tomorrow","11 Tue","12 Wed","13 Thu","14 Fri","15 Sat"];
+let sel=null,focused=0;
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function renderRail(){
+  const q=document.querySelector("#q").value.toLowerCase();
+  const rows=DATA.filter(m=>m[0].toLowerCase().includes(q));
+  document.querySelector("#rail").innerHTML=rows.map((m,i)=>`<div class="movie ${i===focused?'sel':''}" data-i="${i}"><div class="m-name">${m[0]}</div><div class="m-meta"><span>${m[1]}</span><span>${m[2].length} shows</span></div></div>`).join("");
+}
+function pctFor(mi,ci,di){const m=DATA[mi];const base=m[2][ci%m[2].length][1];return Math.max(3,Math.min(98,(base+ci*7+di*13)%101))}
+function renderMatrix(){
+  const m=DATA[focused];
+  document.querySelector("#mTitle").textContent=m[0];
+  document.querySelector("#mSub").textContent=m[1]+" · "+m[2].length+" showtimes";
+  const cityOnly=document.querySelector("#scope .active").dataset.s==="city";
+  const cinemas=cityOnly?CINEMAS.slice(0,4):CINEMAS;
+  let html=`<table><thead><tr><th class="ci">Cinema</th>${DAYS.map(d=>`<th>${d}</th>`).join("")}</tr></thead><tbody>`;
+  cinemas.forEach((cn,ci)=>{
+    html+=`<tr><td class="ci">${cn}</td>`;
+    DAYS.forEach((d,di)=>{
+      const p=pctFor(focused,ci,di);
+      const time=m[2][(ci+di)%m[2].length][0];
+      const sold=p<8;
+      html+=`<td class="cell"><div class="cellbox ${sold?'sold':''}" data-m="${esc(m[0])}" data-c="${esc(cn)}" data-t="${time}" data-p="${p}"><span class="t">${time}</span><span class="f">${m[1]}</span><span class="p">${sold?'sold out':p+'% free'}</span></div></td>`;
+    });
+    html+=`</tr>`;
+  });
+  html+=`</tbody></table><div class="legend"><span><span class="bar" style="--w:90%"></span>mostly free</span><span><span class="bar" style="--w:40%"></span>filling up</span><span><span class="bar" style="--w:8%"></span>almost gone</span></div>`;
+  document.querySelector("#mw").innerHTML=html;
+}
+function seatmap(t){
+  const cols=14,rows=8,g=document.createElement("div");g.className="grid";g.style.gridTemplateColumns=`repeat(${cols},10px)`;
+  let n=0;const seed=t.split("").reduce((a,c)=>a+c.charCodeAt(0),0);const rnd=()=>{const x=Math.sin(n++*seed)*10000;return x-Math.floor(x)};let av=0;
+  const p=40+(seed%58);
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const rv=rnd(),cls=rv<p/100?"av":rv<.95?"":"held";if(cls==="av")av++;const b=document.createElement("button");b.className=`seat ${cls}`;g.appendChild(b)}
+  const w=document.createElement("div");w.className="map-inner";
+  w.innerHTML=`<div class="screen"></div><div class="screen-label">SCREEN</div><div class="area-label">Katsomo</div>`;
+  w.appendChild(g);
+  w.innerHTML+=`<div class="legend2"><span><i class="dot" style="background:var(--free)"></i>Available</span><span><i class="dot" style="background:var(--sold)"></i>Unavailable</span><span><i class="dot" style="background:var(--hold)"></i>Held</span></div>`;
+  return [w,av,p];
+}
+function load(m,c,t,p){document.querySelector("#sTitle").textContent=m;document.querySelector("#sSub").textContent=`${c} · ${t}`;const [map,av,pp]=seatmap(t+c);const mm=document.querySelector("#map");mm.innerHTML="";mm.appendChild(map);document.querySelector("#stats").innerHTML=`<span><strong>${av}</strong> free</span><span><strong>${pp}%</strong> open</span>`}
+document.querySelector("#rail").onclick=e=>{const mv=e.target.closest(".movie");if(!mv)return;focused=+mv.dataset.i;renderRail();renderMatrix()};
+document.querySelector("#mw").onclick=e=>{const b=e.target.closest(".cellbox");if(!b||b.classList.contains("sold"))return;load(b.dataset.m,b.dataset.c,b.dataset.t,b.dataset.p)};
+document.querySelector("#q").oninput=renderRail;
+document.querySelector("#scope").onclick=e=>{const b=e.target.closest("button");if(!b)return;document.querySelectorAll("#scope button").forEach(x=>x.classList.toggle("active",x===b));renderMatrix()};
+renderRail();renderMatrix();
+</script>
+</html>
