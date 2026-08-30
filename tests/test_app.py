@@ -60,8 +60,8 @@ class FinnkinoCoreTests(unittest.TestCase):
             "relatedData": {"films": [{"id": "film-a"}]},
         }
         client.backfill_schedule("2026-07-29", ["1100", "1004"], payload)
-        one = client.cache.get("showtimes/by-business-date/2026-07-29?siteIds=1100")
-        two = client.cache.get("showtimes/by-business-date/2026-07-29?siteIds=1004")
+        one, _ = client.cache.get("showtimes/by-business-date/2026-07-29?siteIds=1100")
+        two, _ = client.cache.get("showtimes/by-business-date/2026-07-29?siteIds=1004")
         self.assertEqual([show["id"] for show in one["showtimes"]], ["a"])
         self.assertEqual([show["id"] for show in two["showtimes"]], ["b"])
         self.assertEqual(client.show_index["a"], "layout-a")

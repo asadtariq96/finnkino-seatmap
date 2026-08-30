@@ -16,7 +16,9 @@ class StaticUiTests(unittest.TestCase):
         self.assertNotIn('data-mode="cinema"', html)
         self.assertNotIn('data-mode="movie"', html)
         self.assertIn('id="experience"', html)
-        self.assertIn('value="All">All cinemas', html)  # single scope select replaces the toggle
+        self.assertIn('id="city"', html)
+        self.assertIn('value="All">All cities', html)
+        self.assertIn('"All cinemas"', html)  # cinema scope label when all cities selected
 
     def test_desktop_seat_pane_is_fixed_right_column(self):
         html = (Path(__file__).parents[1] / "static" / "index.html").read_text(encoding="utf-8")
@@ -40,7 +42,9 @@ class StaticUiTests(unittest.TestCase):
         html = (Path(__file__).parents[1] / "static" / "index.html").read_text(encoding="utf-8")
         self.assertIn("function autoSelect(groups)", html)
         self.assertIn("const groups=renderShows();autoSelect(groups)", html)  # called in loadSchedule
-        self.assertIn("const keep=shows.find(s=>s.id===state.active)||shows.find(s=>s.id===state.active&&false)", html)
+        self.assertIn("function pickShow(shows)", html)
+        self.assertIn("setActivePref(start,siteId)", html)
+        self.assertIn("resetSeatmap(\"Loading…\",true)", html)
         self.assertIn("loadSeatmap(pick.id,showTitle(pick),pick.schedule.startsAt,showFormat(pick),pick.siteId,false)", html)
 
     def test_chip_is_two_line_time_plus_format(self):
@@ -57,7 +61,9 @@ class StaticUiTests(unittest.TestCase):
 
     def test_show_selection_keeps_rendering(self):
         html = (Path(__file__).parents[1] / "static" / "index.html").read_text(encoding="utf-8")
-        self.assertIn("state.active=id;if(rerender)renderShows()", html)
+        self.assertIn("state.active=id;", html)
+        self.assertIn("setActivePref(start,siteId)", html)
+        self.assertIn("if(rerender)renderShows()", html)
         self.assertNotIn("loadSeatmap(show.id", html)  # no implicit auto-load in render paths
 
     def test_search_filters_movies_and_fallback_autoselect(self):
@@ -73,16 +79,20 @@ class StaticUiTests(unittest.TestCase):
         self.assertIn("new IntersectionObserver", html)  # lazy: only visible mini maps fetch seats
         self.assertIn("rootMargin:\"200px\"", html)
         self.assertIn("function openFromGrid(card)", html)
-        self.assertIn(".mm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px}", html)
+        self.assertIn("function fitMiniMap(card,data)", html)
+        self.assertIn(".mm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;align-items:start}", html)
         self.assertIn("class=\"minimap", html)
         self.assertIn("7-day grid", html)
 
     def test_grid_respects_filters_and_days(self):
         html = (Path(__file__).parents[1] / "static" / "index.html").read_text(encoding="utf-8")
         self.assertIn("function gridShows(payload)", html)
-        self.assertIn("matchesExperience(x.show,x.attrs)&&(state.site===\"All\"||x.show.siteId===state.site)", html)
+        self.assertIn("matchesExperience(x.show,x.attrs)&&matchesSite(x.show)", html)
+        self.assertIn("(!state.selectedFilm||x.show.filmId===state.selectedFilm)", html)
+        self.assertIn("function matchesSite(show)", html)
+        self.assertIn("function persistFilm(id)", html)
         self.assertIn("Array.from({length:7},(_,i)=>dayISO(i))", html)  # all 7 days fetched
-        self.assertIn("Promise.all(dates.map(d=>api(`/api/movies?date=${d}`)))", html)
+        self.assertIn("Promise.all(dates.map(d=>fetchSchedule(d)))", html)  # cached 7-day fetch
         self.assertIn('if(document.querySelector("#gridToggle").classList.contains("on"))renderGridView();else loadSchedule()', html)
 
 
