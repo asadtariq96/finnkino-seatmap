@@ -16,3 +16,9 @@ fi
 chmod 600 "$TOKEN_FILE"
 
 "$ROOT/deploy/push-token.sh" "$TOKEN_FILE"
+
+if command -v gh >/dev/null 2>&1; then
+  gh secret set FINNKINO_TOKEN --repo asadtariq96/finnkino-seatmap < "$TOKEN_FILE" 2>/dev/null || true
+fi
+
+echo "Token refreshed on VPS"

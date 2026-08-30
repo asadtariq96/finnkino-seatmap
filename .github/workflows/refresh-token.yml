@@ -1,8 +1,10 @@
 name: Refresh Finnkino token
 
+# GitHub-hosted runners cannot scrape finnkino.fi (Cloudflare). The Mac launchd
+# job runs deploy/refresh-token.sh every 6h and updates the FINNKINO_TOKEN secret.
+# Use this workflow manually if you need to push the cached secret to the VPS.
+
 on:
-  schedule:
-    - cron: "0 */6 * * *"
   workflow_dispatch:
 
 jobs:
@@ -11,13 +13,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - run: pip install 'curl-cffi>=0.13,<1'
-
-      - run: python deploy/fetch_token.py > .finnkino-token
+      - name: Write token from secret
+        env:
+          TOKEN: ${{ secrets.FINNKINO_TOKEN }}
+        run: |
+          if [[ -z "$TOKEN" ]]; then
+            echo "FINNKINO_TOKEN secret is not set" >&2
+            exit 1
+          fi
+          printf '%s' "$TOKEN" > .finnkino-token
 
       - uses: webfactory/ssh-agent@v0.9.0
         with:
