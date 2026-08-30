@@ -14,6 +14,7 @@ rsync -az --delete \
   --exclude '__pycache__/' \
   --exclude 'research/' \
   --exclude 'sketches/' \
+  --exclude '.finnkino-token' \
   --exclude '.DS_Store' \
   "$ROOT/" "$REMOTE:$REMOTE_DIR/"
 
@@ -31,6 +32,10 @@ else
 fi
 pm2 save
 REMOTE
+
+if [[ -x "$ROOT/deploy/refresh-token.sh" ]]; then
+  "$ROOT/deploy/refresh-token.sh"
+fi
 
 if ! ssh -i "$SSH_KEY" "$REMOTE" 'grep -q "finnkino.asad.dev" /etc/caddy/Caddyfile'; then
   ssh -i "$SSH_KEY" "$REMOTE" "sudo tee -a /etc/caddy/Caddyfile > /dev/null" < "$ROOT/deploy/Caddyfile.snippet"

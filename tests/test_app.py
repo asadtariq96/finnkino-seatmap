@@ -1,6 +1,8 @@
 import json
+import os
 import unittest
-from app import extract_api_config, pick_showtimes, build_seat_map, window_dates, multi_site_schedule_path, Finnkino
+from unittest.mock import patch
+from app import extract_api_config, pick_showtimes, build_seat_map, window_dates, multi_site_schedule_path, Finnkino, load_token_config, token_expires_in
 from datetime import date
 
 
@@ -65,6 +67,18 @@ class FinnkinoCoreTests(unittest.TestCase):
         self.assertEqual([show["id"] for show in one["showtimes"]], ["a"])
         self.assertEqual([show["id"] for show in two["showtimes"]], ["b"])
         self.assertEqual(client.show_index["a"], "layout-a")
+
+    def test_load_token_config_from_env(self):
+        with patch.dict(os.environ, {"FINNKINO_TOKEN": "test.jwt.token"}, clear=False):
+            self.assertEqual(load_token_config(), {"token": "test.jwt.token"})
+
+    def test_token_expires_in_reads_jwt_exp(self):
+        import base64
+        payload = base64.urlsafe_b64encode(json.dumps({"exp": 2000000000}).encode()).decode().rstrip("=")
+        token = f"hdr.{payload}.sig"
+        remaining = token_expires_in(token)
+        self.assertIsNotNone(remaining)
+        self.assertGreater(remaining, 0)
 
 
 if __name__ == "__main__":

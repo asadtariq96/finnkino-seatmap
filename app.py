@@ -15,6 +15,38 @@ from aiohttp import web
 BASE = "https://digital-api.finnkino.fi/WSVistaWebClient/ocapi/v1"
 HOME = "https://www.finnkino.fi/"
 ROOT = Path(__file__).parent
+TOKEN_FILE = ROOT / ".finnkino-token"
+TOKEN_REFRESH_MARGIN = 3600  # seconds before expiry to treat token as stale
+
+
+def token_expires_in(token: str) -> float | None:
+    try:
+        payload = token.split(".")[1]
+        payload += "=" * (-len(payload) % 4)
+        data = json.loads(base64.urlsafe_b64decode(payload))
+        exp = data.get("exp")
+        if exp is None:
+            return None
+        return exp - time.time()
+    except Exception:
+        return None
+
+
+def load_token_config(*, allow_expiring: bool = True) -> dict[str, str] | None:
+    token = os.getenv("FINNKINO_TOKEN", "").strip()
+    if not token and TOKEN_FILE.is_file():
+        token = TOKEN_FILE.read_text(encoding="utf-8").strip()
+    if not token:
+        return None
+    if not allow_expiring:
+        remaining = token_expires_in(token)
+        if remaining is not None and remaining < TOKEN_REFRESH_MARGIN:
+            return None
+    return {"token": token}
+
+
+def cloudflare_blocked(html: str, status: int) -> bool:
+    return status == 403 and "Just a moment" in html
 
 
 def extract_api_config(html: str) -> dict[str, str]:
@@ -106,9 +138,44 @@ class Finnkino:
             await self.session.close()
 
     async def refresh_config(self):
+        loaded = load_token_config(allow_expiring=False)
+        if loaded:
+            self.config = loaded
+            return
+        remote = await self.fetch_token_remote()
+        if remote:
+            self.config = {"token": remote}
+            try:
+                TOKEN_FILE.write_text(remote, encoding="utf-8")
+                TOKEN_FILE.chmod(0o600)
+            except OSError:
+                pass
+            return
         response = await self.session.get(HOME, timeout=30)
+        if cloudflare_blocked(response.text, response.status_code):
+            raise RuntimeError(
+                "Finnkino homepage blocked from this server (Cloudflare). "
+                "Set FINNKINO_TOKEN_URL or enable the GitHub Actions token refresh workflow."
+            )
         response.raise_for_status()
         self.config = extract_api_config(response.text)
+
+    async def fetch_token_remote(self) -> str | None:
+        url = os.getenv("FINNKINO_TOKEN_URL", "").strip()
+        if not url:
+            return None
+        headers = {}
+        secret = os.getenv("FINNKINO_TOKEN_SECRET", "").strip()
+        if secret:
+            headers["Authorization"] = f"Bearer {secret}"
+        async with self._upstream:
+            response = await self.session.get(url, headers=headers, timeout=30)
+        response.raise_for_status()
+        body = response.text.strip()
+        if body.startswith("{"):
+            data = json.loads(body)
+            return data.get("token") or data.get("authToken")
+        return body or None
 
     def headers(self) -> dict[str, str]:
         token = self.config["token"]
@@ -125,9 +192,14 @@ class Finnkino:
         async with self._upstream:
             response = await self.session.get(url, headers=self.headers(), timeout=30)
         if response.status_code == 401:
-            await self.refresh_config()
-            async with self._upstream:
-                response = await self.session.get(url, headers=self.headers(), timeout=30)
+            if load_token_config(allow_expiring=False):
+                await self.refresh_config()
+                async with self._upstream:
+                    response = await self.session.get(url, headers=self.headers(), timeout=30)
+            else:
+                await self.refresh_config()
+                async with self._upstream:
+                    response = await self.session.get(url, headers=self.headers(), timeout=30)
         if response.status_code == 429:
             raise web.HTTPTooManyRequests(text="upstream rate limit")
         response.raise_for_status()
@@ -242,6 +314,22 @@ class Finnkino:
             await self.warm_window()
             await asyncio.sleep(300)
 
+    async def token_watch_loop(self):
+        while True:
+            await asyncio.sleep(300)
+            try:
+                loaded = load_token_config()
+                if not loaded:
+                    continue
+                current = (self.config or {}).get("token")
+                remaining = token_expires_in(loaded["token"])
+                if loaded["token"] != current:
+                    self.config = loaded
+                elif remaining is not None and remaining < TOKEN_REFRESH_MARGIN:
+                    await self.refresh_config()
+            except Exception:
+                pass
+
 
 fk = Finnkino()
 
@@ -295,11 +383,13 @@ def create_app():
     async def startup(app):
         await fk.start()
         app["warm_task"] = asyncio.create_task(fk.warm_loop())
+        app["token_task"] = asyncio.create_task(fk.token_watch_loop())
     async def cleanup(app):
-        task = app.get("warm_task")
-        if task and not task.done():
-            task.cancel()
-            await asyncio.gather(task, return_exceptions=True)
+        for key in ("warm_task", "token_task"):
+            task = app.get(key)
+            if task and not task.done():
+                task.cancel()
+                await asyncio.gather(task, return_exceptions=True)
         await fk.close()
     app.on_startup.append(startup); app.on_cleanup.append(cleanup)
     return app

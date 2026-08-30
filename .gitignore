@@ -4,6 +4,10 @@ __pycache__/
 .venv/
 venv/
 
+# Secrets
+.finnkino-token
+.env
+
 # OS / editor
 Thumbs.db
 .DS_Store

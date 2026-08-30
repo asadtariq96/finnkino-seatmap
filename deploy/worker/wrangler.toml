@@ -1,0 +1,6 @@
+name = "finnkino-token"
+main = "index.js"
+compatibility_date = "2024-08-01"
+
+[vars]
+# Set TOKEN_SECRET in Cloudflare dashboard or via: wrangler secret put TOKEN_SECRET
