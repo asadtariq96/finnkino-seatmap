@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SeatFlash — poster layouts</title>
+<style>
+:root{color-scheme:dark;--bg:#0a0c12;--panel:#0f131b;--raised:#161c26;--hover:#1b2230;--line:#232c3a;--soft:#171d28;--text:#eef1f6;--muted:#96a0b1;--dim:#5e6877;--accent:#f3bc4b;--accent-ink:#17120a;--screen:#7fb7e0;--free:#2eaf53;--sold:#34363b;--hold:#d8b94a;--rail:400px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{height:100dvh;overflow:hidden;font:13px/1.35 system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);background-image:radial-gradient(ellipse 120% 70% at 50% -15%,rgba(127,183,224,.07),transparent 55%)}
+button,input,select{font:inherit;color:inherit;cursor:pointer}
+.shell{height:100dvh;display:grid;grid-template-rows:46px 1fr}
+.top{display:flex;align-items:center;gap:8px;padding:0 10px;border-bottom:1px solid var(--line);background:rgba(15,19,27,.94);backdrop-filter:blur(10px);z-index:2}
+.brand{font:700 15px/1 system-ui;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}.brand i{display:inline-block;width:7px;height:7px;border-radius:2px;background:var(--accent);margin-right:8px;box-shadow:0 0 10px rgba(243,188,75,.55)}
+.days{display:flex;gap:2px;flex:1;min-width:0;overflow-x:auto}.day{border:0;background:transparent;color:var(--muted);border-radius:6px;padding:4px 10px;font-weight:600;font-size:13px}.day.active{background:var(--accent);color:var(--accent-ink)}
+.select{height:28px;border:1px solid var(--line);border-radius:6px;background:var(--raised);padding:0 6px;font-size:12px}
+.experience{display:flex;gap:2px;padding:2px;border:1px solid var(--line);border-radius:7px;background:var(--bg)}.experience button{border:0;background:transparent;color:var(--muted);border-radius:5px;padding:3px 7px;font-size:11px}.experience button.active{background:var(--raised);color:var(--accent)}
+.search{height:28px;width:130px;border:1px solid var(--line);border-radius:6px;background:var(--raised);padding:0 8px;font-size:12px}
+.nav{display:flex;align-items:center;gap:4px;flex:0 0 auto;margin-left:4px}
+.nav button{width:30px;height:28px;border:1px solid var(--line);border-radius:6px;background:var(--raised);font-size:15px;line-height:1}
+.nav button:hover{border-color:var(--accent)}
+.nav .label{font:10px ui-monospace,monospace;color:#e8c87f;min-width:148px;text-align:center}
+.dots{display:flex;gap:4px;margin-left:4px}.dots i{width:6px;height:6px;border-radius:50%;background:var(--line);display:block}.dots i.on{background:var(--accent);box-shadow:0 0 8px rgba(243,188,75,.5)}
+.main{min-height:0;display:grid;grid-template-columns:var(--rail) minmax(0,1fr);transition:grid-template-columns .25s ease}
+.list{min-width:0;min-height:0;display:flex;flex-direction:column;border-right:1px solid var(--line);background:var(--panel)}
+.list-head{display:flex;justify-content:space-between;padding:6px 12px;border-bottom:1px solid var(--soft);font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px}
+.shows{flex:1;min-height:0;overflow:auto;padding:6px 8px;scrollbar-width:thin}
+.poster{display:block;width:100%;object-fit:cover;background:#1b2230}
+.m-name{font-weight:650;font-size:14px;line-height:1.15}
+.m-fmt{font:9px ui-monospace,monospace;color:var(--dim);margin-top:2px}
+.m-count{font:9px ui-monospace,monospace;color:var(--dim)}
+.movie{cursor:pointer;border-radius:10px;margin-bottom:5px;border:1px solid transparent}
+.movie:hover{background:var(--hover)}
+.movie.sel{background:var(--raised);border-color:var(--line);box-shadow:inset 3px 0 0 var(--accent)}
+.movie:not(.sel) .cinemas{display:none}
+.cinemas{margin-top:8px;display:flex;flex-direction:column;gap:5px}
+.cg{display:grid;grid-template-columns:100px 1fr;gap:8px;align-items:start}
+.cg-name{font-size:10.5px;color:var(--muted);padding-top:3px}
+.times{display:flex;flex-wrap:wrap;gap:4px}
+.chip{border:1px solid var(--line);background:var(--raised);border-radius:6px;padding:4px 8px;font-size:11px;display:inline-flex;flex-direction:column;align-items:flex-start;min-width:50px}
+.chip.active{background:#3c3118;border-color:rgba(243,188,75,.55)}
+.chip .clock{font-weight:650;font-variant-numeric:tabular-nums}
+.chip .format{color:var(--muted);font:8.5px ui-monospace,monospace;margin-top:1px}
+.seatpane{min-width:0;min-height:0;display:flex;flex-direction:column;background:var(--panel)}
+.seat-head{display:flex;align-items:flex-start;gap:14px;padding:10px 14px;border-bottom:1px solid var(--line);background:rgba(15,19,27,.94)}
+.head-text{min-width:0;flex:1}
+.title{font-size:17px;font-weight:700;line-height:1.1}
+.sub{font-size:11px;color:var(--muted);margin-top:3px}
+.head-poster{display:none;width:64px;flex:0 0 64px;border-radius:8px;aspect-ratio:2/3;object-fit:cover;box-shadow:0 4px 16px rgba(0,0,0,.4)}
+.stats{display:flex;align-items:center;gap:12px;margin-left:auto;font-size:12px;color:var(--muted);flex:0 0 auto;padding-top:2px}
+.stats strong{color:var(--free);font-size:15px}
+.grid-toggle{height:28px;padding:0 10px;border:1px solid var(--line);border-radius:7px;background:var(--raised);color:var(--muted);font-size:11px;font-weight:600;flex:0 0 auto}
+.seatmap{flex:1;min-height:0;display:grid;place-items:center;padding:14px;overflow:hidden}
+.map-inner{--seat:12px}
+.screen-label{text-align:center;color:var(--dim);font:9px ui-monospace,monospace;letter-spacing:2px;margin-bottom:6px}
+.screen{height:5px;width:72%;margin:0 auto 8px;border-radius:50%;background:linear-gradient(90deg,transparent,var(--screen) 15% 85%,transparent);box-shadow:0 -6px 20px rgba(127,183,224,.25)}
+.row{display:grid;grid-template-columns:20px 1fr;gap:5px;margin:2px 0;align-items:center}
+.row-label{font:10px ui-monospace,monospace;text-align:right;color:var(--dim)}
+.seat-row{display:grid;gap:2px}
+.seat{width:var(--seat);height:var(--seat);border-radius:2px;background:var(--sold)}
+.seat.av{background:var(--free)}.seat.held{background:var(--hold)}
+.legend{display:flex;justify-content:center;gap:14px;margin-top:12px;font-size:10px;color:var(--muted)}
+.dot{display:inline-block;width:7px;height:7px;border-radius:2px;margin-right:4px;vertical-align:middle}
+.hint{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--dim);background:rgba(15,19,27,.92);border:1px solid var(--line);padding:7px 14px;border-radius:99px;z-index:9}
+
+/* A — big thumb 96px */
+body[data-layout="a"]{--rail:420px}
+body[data-layout="a"] .movie{display:grid;grid-template-columns:96px 1fr;gap:14px;padding:10px;align-items:start}
+body[data-layout="a"] .movie.sel{grid-template-columns:112px 1fr}
+body[data-layout="a"] .poster{aspect-ratio:2/3;border-radius:8px}
+body[data-layout="a"] .movie.sel .m-count{display:none}
+
+/* B — fat poster column */
+body[data-layout="b"]{--rail:460px}
+body[data-layout="b"] .movie{display:grid;grid-template-columns:148px 1fr;gap:12px;padding:10px;align-items:stretch}
+body[data-layout="b"] .poster{min-height:222px;border-radius:10px}
+body[data-layout="b"] .body{display:flex;flex-direction:column;justify-content:center}
+body[data-layout="b"] .movie.sel .poster{min-height:240px}
+body[data-layout="b"] .movie.sel .m-count{display:none}
+
+/* C — tall card */
+body[data-layout="c"]{--rail:400px}
+body[data-layout="c"] .movie{padding:0;overflow:hidden;border:1px solid var(--soft);background:var(--raised)}
+body[data-layout="c"] .poster{height:220px;aspect-ratio:auto;border-radius:0}
+body[data-layout="c"] .movie.sel .poster{height:260px}
+body[data-layout="c"] .body{padding:10px 12px 12px}
+body[data-layout="c"] .movie.sel .m-count{display:none}
+
+/* D — text list + poster in seat header */
+body[data-layout="d"]{--rail:330px}
+body[data-layout="d"] .movie{padding:8px 10px;border-left:2px solid transparent}
+body[data-layout="d"] .movie .poster{display:none}
+body[data-layout="d"] .movie.sel{border-left-color:var(--accent)}
+body[data-layout="d"] .head-poster{display:block}
+body[data-layout="d"] .movie.sel .m-count{display:none}
+
+/* E — hero selected only */
+body[data-layout="e"]{--rail:400px}
+body[data-layout="e"] .shows{padding:0}
+body[data-layout="e"] .hero{position:relative;height:248px;border-bottom:1px solid var(--line)}
+body[data-layout="e"] .hero .poster{height:100%;aspect-ratio:auto;border-radius:0;mask-image:linear-gradient(#000 55%,transparent)}
+body[data-layout="e"] .hero-cap{position:absolute;inset:auto 0 0 0;padding:14px 12px 12px;background:linear-gradient(transparent,rgba(10,12,18,.98))}
+body[data-layout="e"] .hero-cap .m-name{font-size:20px}
+body[data-layout="e"] .hero-cap .cinemas{display:block!important;margin-top:10px}
+body[data-layout="e"] .hero-cap .cg{grid-template-columns:1fr}
+body[data-layout="e"] .rest .movie{display:grid;grid-template-columns:52px 1fr;gap:10px;padding:8px 10px;border-radius:0;margin:0;border-bottom:1px solid var(--soft);box-shadow:none}
+body[data-layout="e"] .rest .poster{aspect-ratio:2/3;border-radius:5px}
+body[data-layout="e"] .rest .cinemas{display:none!important}
+
+/* F — two-up tiles */
+body[data-layout="f"]{--rail:480px}
+body[data-layout="f"] .shows{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px;align-content:start}
+body[data-layout="f"] .movie{margin:0;padding:0;border:1px solid var(--soft);background:var(--raised);overflow:hidden}
+body[data-layout="f"] .poster{aspect-ratio:2/3;border-radius:0}
+body[data-layout="f"] .body{padding:8px 10px 10px}
+body[data-layout="f"] .movie .cinemas,.movie .m-count{display:none}
+body[data-layout="f"] .movie.sel{grid-column:1/-1;display:grid;grid-template-columns:140px 1fr;gap:14px;padding:10px;outline:2px solid rgba(243,188,75,.45);outline-offset:-2px}
+body[data-layout="f"] .movie.sel .poster{height:210px;aspect-ratio:auto;border-radius:8px}
+body[data-layout="f"] .movie.sel .cinemas{display:flex!important}
+body[data-layout="f"] .movie.sel .m-count{display:none}
+
+@media(max-width:1000px){.main{grid-template-columns:1fr!important;grid-template-rows:48% 52%}.list{border-right:0;border-bottom:1px solid var(--line)}.nav .label{min-width:100px;font-size:9px}.hint{display:none}}
+</style>
+<body data-layout="a">
+<div class="shell">
+  <header class="top">
+    <div class="brand"><i></i>SeatFlash</div>
+    <div class="days"><button class="day active">Today</button><button class="day">Tomorrow</button><button class="day">Wed</button></div>
+    <select class="select"><option>All cities</option></select>
+    <select class="select"><option>All cinemas</option></select>
+    <div class="experience"><button class="active">All</button><button>IMAX</button><button>2D</button></div>
+    <input class="search" placeholder="Filter…" readonly>
+    <div class="nav">
+      <button type="button" id="prev" aria-label="Previous">←</button>
+      <span class="label" id="layoutLabel">A · Big thumb</span>
+      <button type="button" id="next" aria-label="Next">→</button>
+    </div>
+    <div class="dots" id="dots"></div>
+  </header>
+  <main class="main">
+    <section class="list">
+      <div class="list-head"><span>All cinemas</span><span>12 films · 84 shows</span></div>
+      <div id="shows" class="shows"></div>
+    </section>
+    <aside class="seatpane">
+      <div class="seat-head">
+        <img id="headPoster" class="head-poster" alt="">
+        <div class="head-text"><div class="title" id="mapTitle">F1</div><div class="sub" id="mapSub">Finnkino Maxim · IMAX · 2D · Wed 20:15</div></div>
+        <button class="grid-toggle" type="button">7-day grid</button>
+        <div class="stats"><span><strong id="freeCount">142</strong> free</span><span><strong>38%</strong> open</span></div>
+      </div>
+      <div class="seatmap" id="seatmap"></div>
+    </aside>
+  </main>
+</div>
+<div class="hint">← → to switch · click a film to select</div>
+<script>
+const LAYOUTS=[
+  {id:"a",label:"A · Big thumb",note:"96px poster — balanced default"},
+  {id:"b",label:"B · Fat column",note:"148px poster — maximum rail presence"},
+  {id:"c",label:"C · Tall card",note:"220px poster strip — cinematic rows"},
+  {id:"d",label:"D · Poster in header",note:"Text-only list; art moves to seat pane"},
+  {id:"e",label:"E · Hero pick",note:"Selected film owns the top of the rail"},
+  {id:"f",label:"F · Tile grid",note:"Browse posters 2-up, expand on select"},
+];
+const FILMS=[
+  {id:"w",title:"Weapons",fmt:"2D",count:"6 shows · 18:00",p:"https://media.finnkino.fi/1012/Event_14018/portrait_small/GhostbustersFrozenEmpire_1080.jpg",sites:[{n:"Forum",t:[["18:00","2D"],["21:30","2D"]]}]},
+  {id:"n",title:"The Naked Gun",fmt:"2D",count:"Next 17:30",p:"https://media.finnkino.fi/1012/Event_9477/portrait_small/TheGrandBudapestHotel_99.jpg",sites:[{n:"Flamingo",t:[["17:30","2D"]]}]},
+  {id:"f1",title:"F1",fmt:"IMAX · 2D",count:"",p:"https://media.finnkino.fi/1012/Event_9314/portrait_small/TheLegoMovie_99.jpg",sites:[{n:"Finnkino Maxim",t:[["20:15","IMAX · 2D",1],["23:10","IMAX · 2D"]]},{n:"Finnkino Forum",t:[["18:45","IMAX · 2D"]]}]},
+  {id:"j",title:"Jurassic World Rebirth",fmt:"3D",count:"4 shows · 19:00",p:"https://media.finnkino.fi/1012/Event_9499/portrait_small/Godzilla_99t.jpg",sites:[{n:"Maxim",t:[["19:00","3D"]]}]},
+  {id:"s",title:"Smurfs",fmt:"2D",count:"Next 16:20",p:"https://media.finnkino.fi/1012/Event_9337/portrait_small/KummeliV_99.jpg",sites:[{n:"Itis",t:[["16:20","2D"]]}]},
+  {id:"m",title:"Mission: Impossible",fmt:"IMAX",count:"3 shows",p:"https://media.finnkino.fi/1012/Event_9303/portrait_small/Philomena_99.jpg",sites:[{n:"Maxim",t:[["22:00","IMAX"]]}]},
+];
+let idx=0,selected="f1";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const chips=s=>s.t.map(([t,f,a])=>`<button class="chip ${a?"active":""}"><span class="clock">${esc(t)}</span><span class="format">${esc(f)}</span></button>`).join("");
+const cine=f=>f.sites.map(s=>`<div class="cg"><div class="cg-name">${esc(s.n)}</div><div class="times">${chips(s)}</div></div>`).join("");
+function row(f){
+  const sel=f.id===selected;
+  return `<div class="movie ${sel?"sel":""}" data-id="${f.id}">
+    <img class="poster" src="${f.p}" alt="">
+    <div class="body">
+      <div class="m-name">${esc(f.title)}</div>
+      <div class="m-fmt">${esc(f.fmt)}${f.count?` · ${esc(f.count)}`:""}</div>
+      <div class="cinemas">${cine(f)}</div>
+    </div>
+  </div>`;
+}
+function bindMovies(root){
+  root.querySelectorAll(".movie[data-id]").forEach(el=>el.onclick=()=>{selected=el.dataset.id;sync();renderList()});
+}
+function renderList(){
+  const lay=LAYOUTS[idx].id, sel=FILMS.find(f=>f.id===selected)||FILMS[2], box=$("shows");
+  if(lay==="e"){
+    box.innerHTML=`<div class="hero"><img class="poster" src="${sel.p}" alt=""><div class="hero-cap"><div class="m-name">${esc(sel.title)}</div><div class="m-fmt">${esc(sel.fmt)}</div><div class="cinemas">${cine(sel)}</div></div></div><div class="rest">${FILMS.filter(f=>f.id!==selected).map(row).join("")}</div>`;
+  }else box.innerHTML=FILMS.map(row).join("");
+  bindMovies(box);
+}
+function sync(){
+  const f=FILMS.find(x=>x.id===selected)||FILMS[2];
+  $("mapTitle").textContent=f.title;
+  $("mapSub").textContent=`Finnkino Maxim · ${f.fmt} · Wed 20:15`;
+  $("headPoster").src=f.p;
+}
+function renderDots(){
+  $("dots").innerHTML=LAYOUTS.map((l,i)=>`<i class="${i===idx?"on":""}"></i>`).join("");
+}
+function setLayout(n){
+  idx=(n+LAYOUTS.length)%LAYOUTS.length;
+  document.body.dataset.layout=LAYOUTS[idx].id;
+  $("layoutLabel").textContent=LAYOUTS[idx].label;
+  document.title=`SeatFlash — ${LAYOUTS[idx].label}`;
+  renderDots();renderList();sync();
+}
+function seatmap(){
+  let h='<div class="map-inner"><div class="screen-label">SCREEN</div><div class="screen"></div>';
+  for(let r=1;r<=9;r++){
+    let s="";for(let c=1;c<14;c++)s+=`<span class="seat ${Math.random()>.65?"av":Math.random()>.92?"held":""}"></span>`;
+    h+=`<div class="row"><span class="row-label">${r}</span><div class="seat-row" style="grid-template-columns:repeat(13,var(--seat))">${s}</div></div>`;
+  }
+  $("seatmap").innerHTML=h+'<div class="legend"><span><span class="dot" style="background:var(--free)"></span>Free</span><span><span class="dot" style="background:var(--sold)"></span>Sold</span></div></div>';
+}
+$("prev").onclick=()=>setLayout(idx-1);
+$("next").onclick=()=>setLayout(idx+1);
+window.addEventListener("keydown",e=>{
+  if(e.key==="ArrowLeft"){e.preventDefault();setLayout(idx-1)}
+  if(e.key==="ArrowRight"){e.preventDefault();setLayout(idx+1)}
+},true);
+seatmap();setLayout(0);
+</script>
+</body>
+</html>

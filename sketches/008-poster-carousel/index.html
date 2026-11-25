@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SeatFlash — bottom poster carousel mock</title>
+<style>
+:root{color-scheme:dark;--bg:#0a0c12;--panel:#0f131b;--raised:#161c26;--hover:#1b2230;--line:#232c3a;--soft:#171d28;--text:#eef1f6;--muted:#96a0b1;--dim:#5e6877;--accent:#f3bc4b;--accent-ink:#17120a;--screen:#7fb7e0;--free:#2eaf53;--sold:#34363b;--hold:#d8b94a;--carousel:220px;--poster-w:112px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{height:100dvh;overflow:hidden;font:13px/1.35 system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);background-image:radial-gradient(ellipse 120% 70% at 50% -15%,rgba(127,183,224,.07),transparent 55%)}
+button,input,select{font:inherit;color:inherit;cursor:pointer}
+.shell{height:100dvh;display:grid;grid-template-rows:46px 1fr var(--carousel);overflow:hidden}
+.top{display:flex;align-items:center;gap:8px;padding:0 10px;border-bottom:1px solid var(--line);background:rgba(15,19,27,.94);backdrop-filter:blur(10px);z-index:3}
+.brand{font:700 15px/1 system-ui;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}.brand i{display:inline-block;width:7px;height:7px;border-radius:2px;background:var(--accent);margin-right:8px;box-shadow:0 0 10px rgba(243,188,75,.55)}
+.days{display:flex;gap:2px;flex:1;min-width:0;overflow-x:auto}.day{border:0;background:transparent;color:var(--muted);border-radius:6px;padding:4px 10px;font-weight:600;font-size:13px}.day.active{background:var(--accent);color:var(--accent-ink)}
+.select{height:28px;border:1px solid var(--line);border-radius:6px;background:var(--raised);padding:0 6px;font-size:12px;max-width:120px}
+.experience{display:flex;gap:2px;padding:2px;border:1px solid var(--line);border-radius:7px;background:var(--bg)}.experience button{border:0;background:transparent;color:var(--muted);border-radius:5px;padding:3px 7px;font-size:11px}.experience button.active{background:var(--raised);color:var(--accent)}
+.search{height:28px;width:120px;border:1px solid var(--line);border-radius:6px;background:var(--raised);padding:0 8px;font-size:12px}
+.mock-tag{margin-left:auto;font:10px ui-monospace,monospace;color:#e8c87f;background:rgba(243,188,75,.1);border:1px solid rgba(243,188,75,.25);border-radius:5px;padding:3px 8px;white-space:nowrap}
+.main{min-height:0;display:grid;grid-template-columns:300px minmax(0,1fr)}
+.list{min-width:0;min-height:0;display:flex;flex-direction:column;border-right:1px solid var(--line);background:var(--panel)}
+.list-head{display:flex;justify-content:space-between;padding:6px 12px;border-bottom:1px solid var(--soft);font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;flex:0 0 auto}
+.shows{flex:1;min-height:0;overflow:auto;padding:4px 8px;scrollbar-width:thin}
+.movie{padding:6px 10px 6px 8px;border:1px solid transparent;border-left:2px solid transparent;border-radius:8px;margin-bottom:1px;cursor:pointer}
+.movie:hover{background:var(--hover)}
+.movie.sel{background:var(--raised);border-color:var(--line);border-left-color:var(--accent)}
+.movie:not(.sel) .cinemas{display:none}
+.m-row{display:flex;align-items:baseline;gap:8px;min-width:0}
+.m-name{font-weight:650;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.m-fmt{font:9px ui-monospace,monospace;color:var(--dim);flex:0 0 auto}
+.m-count{margin-left:auto;font:9px ui-monospace,monospace;color:var(--dim);white-space:nowrap}
+.movie.sel .m-count{display:none}
+.cinemas{margin-top:6px;display:flex;flex-direction:column;gap:4px}
+.cg{display:grid;grid-template-columns:96px 1fr;gap:8px;align-items:start}
+.cg-name{font-size:10.5px;color:var(--muted);padding-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.times{display:flex;flex-wrap:wrap;gap:4px}
+.chip{border:1px solid var(--line);background:var(--raised);border-radius:6px;padding:3px 7px;font-size:11px;display:inline-flex;flex-direction:column;align-items:flex-start;min-width:48px}
+.chip.active{background:#3c3118;border-color:rgba(243,188,75,.55);box-shadow:0 0 0 1px rgba(243,188,75,.15)}
+.chip .clock{font-weight:650;font-variant-numeric:tabular-nums}
+.chip .format{color:var(--muted);font:8.5px ui-monospace,monospace}
+.seatpane{min-width:0;min-height:0;display:flex;flex-direction:column;background:var(--panel)}
+.seat-head{display:flex;align-items:center;gap:12px;padding:8px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap;background:rgba(15,19,27,.94)}
+.title{font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sub{font-size:11px;color:var(--muted);margin-top:2px}
+.stats{margin-left:auto;display:flex;gap:12px;font-size:12px;color:var(--muted)}
+.stats strong{color:var(--free);font-size:15px}
+.grid-toggle{height:28px;padding:0 10px;border:1px solid var(--line);border-radius:7px;background:var(--raised);color:var(--muted);font-size:11px;font-weight:600}
+.seatmap{flex:1;min-height:0;display:grid;place-items:center;padding:10px 14px 16px;overflow:hidden}
+.map-inner{--seat:12px}
+.screen-label{text-align:center;color:var(--dim);font:9px ui-monospace,monospace;letter-spacing:2px;margin-bottom:6px}
+.screen{height:5px;width:70%;margin:0 auto 8px;border-radius:50%;background:linear-gradient(90deg,transparent,var(--screen) 15% 85%,transparent);box-shadow:0 -6px 20px rgba(127,183,224,.25)}
+.row{display:grid;grid-template-columns:20px 1fr;gap:5px;margin:2px 0;align-items:center}
+.row-label{font:10px ui-monospace,monospace;text-align:right;color:var(--dim)}
+.seat-row{display:grid;gap:2px}
+.seat{width:var(--seat);height:var(--seat);border-radius:2px;background:var(--sold)}
+.seat.av{background:var(--free)}.seat.held{background:var(--hold)}
+.legend{display:flex;justify-content:center;gap:12px;margin-top:10px;font-size:10px;color:var(--muted)}
+.dot{display:inline-block;width:7px;height:7px;border-radius:2px;margin-right:4px;vertical-align:middle}
+
+/* bottom carousel */
+.carousel-wrap{position:relative;border-top:1px solid var(--line);background:linear-gradient(180deg,rgba(15,19,27,.98),rgba(10,12,18,.99));box-shadow:0 -8px 32px rgba(0,0,0,.35);z-index:2;display:flex;flex-direction:column;min-height:0}
+.carousel-head{display:flex;align-items:center;justify-content:space-between;padding:8px 14px 2px;flex:0 0 auto}
+.carousel-head span{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.55px}
+.carousel-head em{font-style:normal;color:var(--muted);font-size:10px}
+.carousel-scroll{position:relative;flex:1;min-height:0;display:flex;align-items:center;padding:0 40px}
+.carousel-track{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding:10px 4px 14px;flex:1;-webkit-overflow-scrolling:touch}
+.carousel-track::-webkit-scrollbar{display:none}
+.carousel-fade{position:absolute;top:0;bottom:0;width:40px;pointer-events:none;z-index:1}
+.carousel-fade.left{left:0;background:linear-gradient(90deg,var(--panel),transparent)}
+.carousel-fade.right{right:0;background:linear-gradient(270deg,var(--panel),transparent)}
+.carousel-btn{position:absolute;top:50%;transform:translateY(-50%);width:32px;height:32px;border:1px solid var(--line);border-radius:50%;background:var(--raised);color:var(--text);font-size:16px;line-height:1;z-index:2;display:grid;place-items:center}
+.carousel-btn:hover{border-color:var(--accent)}
+.carousel-btn.prev{left:6px}.carousel-btn.next{right:6px}
+.poster-card{flex:0 0 var(--poster-w);scroll-snap-align:center;border:0;background:transparent;padding:0;cursor:pointer;text-align:left;color:var(--text);border-radius:10px;transition:transform .15s ease}
+.poster-card:hover{transform:translateY(-4px)}
+.poster-card .art{width:var(--poster-w);aspect-ratio:2/3;border-radius:9px;object-fit:cover;display:block;background:#1b2230;box-shadow:0 6px 18px rgba(0,0,0,.4);border:2px solid transparent;transition:border-color .15s,box-shadow .15s}
+.poster-card.sel .art{border-color:var(--accent);box-shadow:0 0 0 1px rgba(243,188,75,.35),0 8px 24px rgba(0,0,0,.5)}
+.poster-card .label{display:block;margin-top:6px;font-size:11px;font-weight:600;line-height:1.2;max-width:var(--poster-w);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+.poster-card.sel .label{color:#e8c87f}
+.poster-card .meta{display:block;font:8.5px ui-monospace,monospace;color:var(--dim);margin-top:2px}
+
+@media(max-width:900px){
+  .main{grid-template-columns:1fr;grid-template-rows:minmax(0,40%) minmax(0,60%)}
+  .list{border-right:0;border-bottom:1px solid var(--line)}
+  :root{--carousel:196px;--poster-w:96px}
+}
+</style>
+<div class="shell">
+  <header class="top">
+    <div class="brand"><i></i>SeatFlash</div>
+    <div class="days"><button class="day active">Today</button><button class="day">Tomorrow</button><button class="day">Wed 3</button><button class="day">Thu 4</button></div>
+    <select class="select"><option>All cities</option><option>Helsinki</option></select>
+    <select class="select"><option>All cinemas</option><option>Maxim</option></select>
+    <div class="experience"><button class="active">All</button><button>IMAX</button><button>2D</button></div>
+    <input class="search" placeholder="Filter…" readonly>
+    <span class="mock-tag">Carousel concept mock</span>
+  </header>
+
+  <main class="main">
+    <section class="list">
+      <div class="list-head"><span>All cinemas</span><span>12 films · 84 shows</span></div>
+      <div id="shows" class="shows"></div>
+    </section>
+    <aside class="seatpane">
+      <div class="seat-head">
+        <div><div class="title" id="mapTitle">F1</div><div class="sub" id="mapSub">Finnkino Maxim · IMAX · 2D · Wed 20:15</div></div>
+        <button class="grid-toggle" type="button">7-day grid</button>
+        <div class="stats"><span><strong>142</strong> free</span><span><strong>38%</strong> open</span></div>
+      </div>
+      <div class="seatmap" id="seatmap"></div>
+    </aside>
+  </main>
+
+  <footer class="carousel-wrap">
+    <div class="carousel-head">
+      <span>Now showing</span>
+      <em>Click a poster or pick a title above · scroll ↔</em>
+    </div>
+    <div class="carousel-scroll">
+      <div class="carousel-fade left"></div>
+      <div class="carousel-fade right"></div>
+      <button type="button" class="carousel-btn prev" id="cPrev" aria-label="Scroll posters left">‹</button>
+      <div class="carousel-track" id="carousel"></div>
+      <button type="button" class="carousel-btn next" id="cNext" aria-label="Scroll posters right">›</button>
+    </div>
+  </footer>
+</div>
+<script>
+const FILMS=[
+  {id:"w",title:"Weapons",fmt:"2D",count:"6 shows · 18:00",p:"https://media.finnkino.fi/1012/Event_14018/portrait_small/GhostbustersFrozenEmpire_1080.jpg",sites:[{n:"Forum",t:[["18:00","2D"],["21:30","2D"]]}]},
+  {id:"n",title:"The Naked Gun",fmt:"2D",count:"Next 17:30",p:"https://media.finnkino.fi/1012/Event_9477/portrait_small/TheGrandBudapestHotel_99.jpg",sites:[{n:"Flamingo",t:[["17:30","2D"]]}]},
+  {id:"f1",title:"F1",fmt:"IMAX · 2D",count:"",p:"https://media.finnkino.fi/1012/Event_9314/portrait_small/TheLegoMovie_99.jpg",sites:[{n:"Finnkino Maxim",t:[["20:15","IMAX · 2D",1],["23:10","IMAX · 2D"]]},{n:"Finnkino Forum",t:[["18:45","IMAX · 2D"]]}]},
+  {id:"j",title:"Jurassic World Rebirth",fmt:"3D",count:"4 shows · 19:00",p:"https://media.finnkino.fi/1012/Event_9499/portrait_small/Godzilla_99t.jpg",sites:[{n:"Maxim",t:[["19:00","3D"]]}]},
+  {id:"s",title:"Smurfs",fmt:"2D",count:"Next 16:20",p:"https://media.finnkino.fi/1012/Event_9337/portrait_small/KummeliV_99.jpg",sites:[{n:"Itis",t:[["16:20","2D"]]}]},
+  {id:"m",title:"Mission: Impossible",fmt:"IMAX",count:"3 shows",p:"https://media.finnkino.fi/1012/Event_9303/portrait_small/Philomena_99.jpg",sites:[{n:"Maxim",t:[["22:00","IMAX"]]}]},
+  {id:"d",title:"Dune: Part Three",fmt:"IMAX · 2D",count:"5 shows",p:"https://media.finnkino.fi/1012/Event_9473/portrait_small/LeWeekEnd_99.jpg",sites:[{n:"Maxim",t:[["19:30","IMAX"]]}]},
+  {id:"g",title:"Grand Budapest Hotel",fmt:"2D",count:"2 shows",p:"https://media.finnkino.fi/1012/Event_9477/portrait_small/TheGrandBudapestHotel_99.jpg",sites:[{n:"Kino Pulssi",t:[["20:00","2D"]]}]},
+];
+let selected="f1";
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const chips=s=>s.t.map(([t,f,a])=>`<button class="chip ${a?"active":""}"><span class="clock">${esc(t)}</span><span class="format">${esc(f)}</span></button>`).join("");
+const cine=f=>f.sites.map(s=>`<div class="cg"><div class="cg-name">${esc(s.n)}</div><div class="times">${chips(s)}</div></div>`).join("");
+
+function select(id){
+  selected=id;
+  renderList();
+  renderCarousel();
+  syncHeader();
+  scrollCarouselToSelected(false);
+  document.querySelector(`.movie[data-id="${id}"]`)?.scrollIntoView({block:"nearest",behavior:"smooth"});
+}
+
+function renderList(){
+  document.getElementById("shows").innerHTML=FILMS.map(f=>{
+    const sel=f.id===selected;
+    return `<div class="movie ${sel?"sel":""}" data-id="${f.id}">
+      <div class="m-row"><span class="m-name">${esc(f.title)}</span><span class="m-fmt">${esc(f.fmt)}</span>${f.count?`<span class="m-count">${esc(f.count)}</span>`:""}</div>
+      <div class="cinemas">${cine(f)}</div>
+    </div>`;
+  }).join("");
+  document.querySelectorAll(".movie[data-id]").forEach(el=>el.onclick=()=>select(el.dataset.id));
+}
+
+function renderCarousel(){
+  const track=document.getElementById("carousel");
+  track.innerHTML=FILMS.map(f=>`<button type="button" class="poster-card ${f.id===selected?"sel":""}" data-id="${f.id}" aria-label="${esc(f.title)}">
+    <img class="art" src="${f.p}" alt="">
+    <span class="label">${esc(f.title)}</span>
+    <span class="meta">${esc(f.fmt)}</span>
+  </button>`).join("");
+  track.querySelectorAll(".poster-card").forEach(el=>el.onclick=()=>select(el.dataset.id));
+}
+
+function scrollCarouselToSelected(smooth){
+  const card=document.querySelector(`.poster-card[data-id="${selected}"]`);
+  card?.scrollIntoView({inline:"center",block:"nearest",behavior:smooth?"smooth":"auto"});
+}
+
+function syncHeader(){
+  const f=FILMS.find(x=>x.id===selected)||FILMS[2];
+  document.getElementById("mapTitle").textContent=f.title;
+  document.getElementById("mapSub").textContent=`Finnkino Maxim · ${f.fmt} · Wed 20:15`;
+}
+
+function renderSeatmap(){
+  let h='<div class="map-inner"><div class="screen-label">SCREEN</div><div class="screen"></div>';
+  for(let r=1;r<=8;r++){
+    let s="";for(let c=1;c<13;c++)s+=`<span class="seat ${Math.random()>.62?"av":Math.random()>.9?"held":""}"></span>`;
+    h+=`<div class="row"><span class="row-label">${r}</span><div class="seat-row" style="grid-template-columns:repeat(12,var(--seat))">${s}</div></div>`;
+  }
+  document.getElementById("seatmap").innerHTML=h+'<div class="legend"><span><span class="dot" style="background:var(--free)"></span>Free</span><span><span class="dot" style="background:var(--sold)"></span>Sold</span></div></div>';
+}
+
+document.getElementById("cPrev").onclick=()=>document.getElementById("carousel").scrollBy({left:-280,behavior:"smooth"});
+document.getElementById("cNext").onclick=()=>document.getElementById("carousel").scrollBy({left:280,behavior:"smooth"});
+
+renderSeatmap();select("f1");
+</script>
